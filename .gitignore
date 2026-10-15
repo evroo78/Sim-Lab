@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Системні файли
+.DS_Store
+Thumbs.db
+
+# Секрети та локальні налаштування
+.env
+.env.*
+
+# Тимчасові файли
+*.log
+
+# Claude Code — локальні налаштування
+.claude/settings.local.json
+
+# Локальні файли з інструкціями/контекстом, якщо вони приватні
+CLAUDE.local.md
+
+# Секрети та ключі
+.env
+.env.*
+!.env.example
