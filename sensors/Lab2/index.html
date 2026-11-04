@@ -157,6 +157,7 @@ footer b{color:var(--ink);font-weight:600}
     <div class="dd"><button class="navb" id="navLabs" type="button">Лабораторні роботи ▾</button><div class="ddm hide" id="labsMenu"></div></div>
     <button class="navb" id="navCourse" type="button">Про курс</button>
     <button class="navb" id="navAuthor" type="button">Про автора курсу</button>
+    <button class="navb hide" id="navWho" type="button" title="Повернутися до вибору студента (прогрес збережеться)">Змінити студента</button>
   </nav>
   <span id="status">завантаження…</span>
 </header>
@@ -790,7 +791,7 @@ function initStart(){
     if(Q.get('reset')==='1'){clearState();try{localStorage.removeItem(JKEY())}catch(e){}}
     jRender();
     await loadTotals(ST.student.id);
-    $('s-start').classList.add('hide');
+    $('s-start').classList.add('hide');$('navWho').classList.remove('hide');
     const saved=loadState();
     if(saved&&saved.v===1){resumeFrom(saved)}else{startA1()}
   };
@@ -2593,6 +2594,14 @@ function renderReport(){
   $('infoX').onclick=()=>$('info').classList.add('hide');$('info').onclick=e=>{if(e.target.id==='info')$('info').classList.add('hide')};
   $('foot').innerHTML='<div><b>'+S.course+'</b> · онлайн-симулятор лабораторних робіт<br>'+S.department+'<br>'+S.university+'</div><div style="text-align:right">Автор курсу: <b>'+S.author+'</b><br>'+S.credit+'<br>© '+S.year+'</div>';
 })();
+/* ---------- повернення до вибору студента ---------- */
+$('navWho').onclick=()=>{
+  if(!confirm('Повернутися до вибору студента?\nПрогрес '+(ST.student?ST.student.name:'')+' збережеться: обравши себе знову, ви продовжите з того самого місця.'))return;
+  try{saveState()}catch(e){}
+  try{flush()}catch(e){}
+  const q=new URLSearchParams(location.search);q.delete('reset');
+  setTimeout(()=>{location.href=location.pathname+(q.toString()?'?'+q:'')},300);
+};
 /* ---------- старт ---------- */
 (async function(){
   try{await loadConfig();}catch(e){$('status').textContent='Помилка конфігурації: '+e.message;$('loadLbl').textContent='Не вдалося завантажити список студентів: '+e.message;return}
