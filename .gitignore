@@ -29,3 +29,42 @@ CLAUDE.local.md
 .env
 .env.*
 !.env.example
+
+# Таблиці зі списками студентів і варіантами – не публікувати (персональні дані)
+*.xlsx
+*.xls
+*.csv
+
+# Файли-ярлики Google Диска (Google Таблиці, Документи, Презентації, Форми)
+*.gsheet
+*.gdoc
+*.gslides
+*.gform
+*.gdraw
+*.gmap
+*.gsite
+*.gtable
+*.gjam
+*.gscript
+.tmp.drivedownload/
+.tmp.driveupload/
+
+# Особистий довідник
+git_довідник.md
+
+# Бекенд Apps Script живе в Google, у репозиторії не потрібен
+gas/
+
+# Службові файли ОС і редакторів
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+.vscode/
+.idea/
+
+# Тести, залежності, скріншоти
+node_modules/
+tests/
+shots/
+*.log

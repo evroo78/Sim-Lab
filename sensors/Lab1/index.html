@@ -381,7 +381,7 @@ footer b{color:var(--ink);font-weight:600}
   </div>
 </section>
 <section id="s-a4" class="hide">
-  <h2 class="steph">Крок A4. Фотошаблон, експонування, проявлення, задублювання</h2>
+  <h2 class="steph">Крок A3. Фотошаблон, експонування, проявлення, задублювання</h2>
   <div class="card task" id="a4task"></div>
   <div class="a1">
     <div class="card scard" style="padding:10px" id="a4card">
@@ -470,7 +470,7 @@ footer b{color:var(--ink);font-weight:600}
   </div>
 </section>
 <section id="s-a5" class="hide">
-  <h2 class="steph">Крок A5. Травлення плівки і зняття фоторезисту</h2>
+  <h2 class="steph">Крок A4. Травлення плівки і зняття фоторезисту</h2>
   <div class="card task" id="a5task"></div>
   <details class="help" id="a5help"><summary>Довідка до кроку: як обрати травник і розрахувати час травлення</summary><div id="a5helpBody"></div></details>
   <div class="a1">
@@ -529,7 +529,7 @@ footer b{color:var(--ink);font-weight:600}
   </div>
 </section>
 <section id="s-a6" class="hide">
-  <h2 class="steph">Крок A6. Скрайбування, перевірка опору, пайка виводів</h2>
+  <h2 class="steph">Крок A5. Скрайбування, перевірка опору, пайка виводів</h2>
   <div class="card task" id="a6task"></div>
   <details class="help" id="a6help"><summary>Довідка до кроку: як розрахувати опір сенсора (з прикладом)</summary><div id="a6helpBody"></div></details>
   <div class="a1">
@@ -565,7 +565,7 @@ footer b{color:var(--ink);font-weight:600}
           <path id="a6wR" d="" fill="none" stroke="#c0392b" stroke-width="2.5"/><path id="a6wB" d="" fill="none" stroke="#111" stroke-width="2.5"/>
           <g id="a6pR" class="tap"><g transform="rotate(-50)"><rect x="0" y="-1.2" width="34" height="2.4" fill="#c9d1d8"/><rect x="32" y="-5" width="62" height="10" rx="4" fill="#c0392b"/></g></g>
           <g id="a6pB" class="tap"><g transform="rotate(-50)"><rect x="0" y="-1.2" width="34" height="2.4" fill="#c9d1d8"/><rect x="32" y="-5" width="62" height="10" rx="4" fill="#222"/></g></g>
-          <g id="a6iron" style="display:none" pointer-events="none"><g transform="rotate(-35)"><path d="M0 0 L16 -4 L16 4 Z" fill="#8a8f94"/><rect x="16" y="-3" width="46" height="6" fill="#b9c2ca"/><rect x="60" y="-7" width="70" height="14" rx="6" fill="#1f5f99"/></g><text x="62" y="30" font-size="12" font-weight="700" fill="#3b4856">паяльник</text></g>
+          <g id="a6iron" style="display:none" pointer-events="none"><g transform="rotate(-35)"><path d="M0 0 L16 -4 L16 4 Z" fill="#8a8f94"/><rect x="16" y="-3" width="46" height="6" fill="#b9c2ca"/><rect x="60" y="-7" width="70" height="14" rx="6" fill="#1f5f99"/><text x="95" y="3.8" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">паяльник</text></g></g>
         </g>
         <g id="a6bar"><rect x="0" y="338" width="520" height="42" rx="8" fill="#eef3f7" stroke="#cdd6df"/>
           <text id="a6barT" x="10" y="364" font-size="13" fill="#1c2733"></text>
@@ -681,7 +681,7 @@ footer b{color:var(--ink);font-weight:600}
 
 <div id="modal" class="hide"><div class="box"><h3 id="mTitle"></h3><p id="mText"></p><button id="mBtn">Нова пластина (почати спочатку)</button></div></div>
 
-<script src="../site.js"></script>
+<script src="../../site.js"></script>
 <script src="config.js"></script>
 <script src="settings.js"></script>
 <script>
@@ -699,7 +699,7 @@ let W=null;                         // поточна пластина
 const P=k=>CFG.params[k];
 const mat=n=>CFG.materials.find(m=>m.material===n);
 const phase=c=>CFG.phases.find(p=>p.code===c);
-const speedups=n=>String(mat(n).speedups||'').split(';').map(x=>parseFloat(String(x).replace(',','.'))).filter(x=>x>1);
+const speedups=n=>[];   // прискорення часу під час напилення прибрано (за бажанням викладача)
 
 /* ---------- зв'язок з таблицею ---------- */
 const SURL=()=>(window.SETTINGS&&window.SETTINGS.script_url)||'';
@@ -1453,13 +1453,14 @@ function closeMicro(){$('loupe').classList.add('hide');document.querySelectorAll
   $('mClose').onclick=closeMicro;
 })();
 
-/* =================== КРОК A4: конфігурація, фотошаблон, експонування, проявлення =================== */
+/* =================== КРОК A3: конфігурація, фотошаблон, експонування, проявлення =================== */
 const C_GLASS='#e3ecf4',C_CHROME='#26323d';
 let A4busy=false;
-function a4say(t){jAdd('A4',t)}
+function a4say(t){jAdd('A3',t)}
 /* Малюнок одного чипа 10×10 мм у координатах 0..100: змійка + 2 контактні майданчики.
    Масштаб доріжки умовний, але співвідношення сторін поля і кількість витків – як у фотошаблоні. */
-let CHIP_EDGE=false,CHIP_WK=1,CHIP_NOPAL=false;   // NOPAL: контури без «мікроскопних» кольорів
+let CHIP_EDGE=false,CHIP_WK=1,CHIP_NOPAL=false,A5_NB=false;   // A5_NB: на пластині без власного фону чипа (інакше на краях чипів видно «рамки»)
+   // NOPAL: контури без «мікроскопних» кольорів
 function chipInner(t,track,bg){
   const ax=+t.area_x_mm,ay=+t.area_y_mm,w=+t.w_mm,g=+t.gap_mm,s=Math.min(80/ax,66/ay);
   const W_=ax*s,H_=ay*s,x0=10+(80-W_)/2,y0=8,n=Math.max(2,Math.round(ay/(w+g))),p=H_/n,sw=Math.max(1.2,p*w/(w+g))*CHIP_WK;
@@ -1476,7 +1477,7 @@ function chipInner(t,track,bg){
     '<path d="'+d+'" fill="none" stroke="'+track+'" stroke-linejoin="miter" stroke-linecap="square" stroke-width="'+sw.toFixed(2)+'"/>'+
     '<g fill="'+track+'"><rect x="5" y="82" width="18" height="14" rx="1"/><rect x="77" y="82" width="18" height="14" rx="1"/></g>';
 }
-/* дефекти резисту з A2 видно після проявлення (крок A4) */
+/* дефекти резисту з A2 видно після проявлення (крок A3) */
 function chipDefect(code,rc,mc){
   if(code==='thick'||code==='resist_thick')return '<rect width="100" height="100" fill="'+rc+'" opacity=".38"/>';      // недоекспоновано: на відкритих ділянках лишився резист
   if(code==='thin'){let h='',x=7;for(let i=0;i<34;i++){x=(x*37+11)%97;const y=(x*53+i*29)%93;h+='<circle cx="'+(x+2)+'" cy="'+(y+3)+'" r="1.3" fill="'+mc+'"/>'}return h}  // проколи
@@ -1528,7 +1529,7 @@ function a4Config(){
     chosen=CFG.templates.find(x=>x.id===g.dataset.id);
     a4Bar('Доріжка '+fmt(chosen.w_mm,2)+' мм, поле '+fmt(chosen.area_x_mm,0)+' × '+fmt(chosen.area_y_mm,0)+' мм','Взяти',()=>{
       b.a4={phase:'mask',cfg:chosen.id};saveState();renderReport();
-      logRow('Виготовлення',{wafer:waferId(),step:'A4',event:'config_chosen',param:'template_id',value:chosen.id,result:''});
+      logRow('Виготовлення',{wafer:waferId(),step:'A3',event:'config_chosen',param:'template_id',value:chosen.id,result:''});
       a4say('Конфігурація: доріжка '+fmt(chosen.w_mm,2)+' мм, поле '+fmt(chosen.area_x_mm,0)+'×'+fmt(chosen.area_y_mm,0)+' мм');a4Mask()})});
 }
 function a4Mask(){
@@ -1549,7 +1550,7 @@ function a4Mask(){
     const q=g.querySelector('.polsel');q.setAttribute('stroke','#1f6fb2');q.setAttribute('fill','#eaf3fb');pol=g.dataset.p;
     a4Bar('Обрано фотошаблон '+(g.querySelector('text').textContent.slice(-1)),'Покласти на пластину',()=>{
       b.a4.pol=pol;b.a4.lab=g.querySelector('text').textContent.slice(-1);b.a4.phase='exp';saveState();renderReport();
-      logRow('Виготовлення',{wafer:waferId(),step:'A4',event:'mask_chosen',param:'polarity',value:pol==='dark'?'dark_track':'clear_track',result:''});
+      logRow('Виготовлення',{wafer:waferId(),step:'A3',event:'mask_chosen',param:'polarity',value:pol==='dark'?'dark_track':'clear_track',result:''});
       a4say('Обрано фотошаблон з '+(pol==='dark'?'темною доріжкою на світлому полі':'світлою доріжкою на темному полі'));a4Run()},'Інша конфігурація',a4Config)});
 }
 async function a4Pour(ms,fill){   // нахил пляшки, струмінь, наповнення чашки
@@ -1590,7 +1591,7 @@ async function a4Run(){
   await tween(500,k=>$('a4uv').setAttribute('opacity',k.toFixed(2)));
   await tween(3000,()=>{});
   await tween(400,k=>$('a4uv').setAttribute('opacity',(1-k).toFixed(2)));
-  a4say('Експонування: '+texp+' с');logRow('Виготовлення',{wafer:waferId(),step:'A4',event:'exposed',param:'t_s',value:texp,result:''});
+  a4say('Експонування: '+texp+' с');logRow('Виготовлення',{wafer:waferId(),step:'A3',event:'exposed',param:'t_s',value:texp,result:''});
   $('a4mask').style.transform='translate(450px,0)';await sleep(1100);
   // 3. проявлення: пластину кладуть у чашку; студент торкається пляшки з проявником
   const dn=String(P('developer_name')||'KOH 0,4 %');
@@ -1633,10 +1634,10 @@ async function a4Run(){
   await tween(7000,k=>$('a4ow').setAttribute('transform','translate('+(40+440*k).toFixed(1)+' 0)'));
   await tween(800,k=>{$('a4oven').setAttribute('opacity',(1-k).toFixed(2));$('a4wrot').setAttribute('opacity',k.toFixed(2))});
   a4HideOven();a4say('Задублювання: '+hbT+' °C, '+hbM+' хв');
-  logRow('Виготовлення',{wafer:waferId(),step:'A4',event:'hardbake',param:'T_C;min',value:hbT+';'+hbM,result:''});
+  logRow('Виготовлення',{wafer:waferId(),step:'A3',event:'hardbake',param:'T_C;min',value:hbT+';'+hbM,result:''});
   b.a4.hb=hbT+' °C, '+hbM+' хв';
   b.a4.done=true;b.a4.ok=a4Correct();b.a4.texp=texp;b.a4.tdev=tdev;ST.stage='a4';saveState();
-  logRow('Виготовлення',{wafer:waferId(),step:'A4',event:'developed',param:'pattern',value:b.a4.ok?'track':'inverse',result:''});
+  logRow('Виготовлення',{wafer:waferId(),step:'A3',event:'developed',param:'pattern',value:b.a4.ok?'track':'inverse',result:''});
   A4busy=false;a4Result();
 }
 function a4Result(){
@@ -1645,8 +1646,8 @@ function a4Result(){
   a4Show(true);a4Bar('Пластина після задублювання','Мікроскоп',()=>openMicro());a4BuildScene();
   $('a4resist').setAttribute('opacity',0);$('a4tray').setAttribute('opacity',0);$('a4uv').setAttribute('opacity',0);$('a4mask').style.transform='translate(450px,0)';
   $('a4Stage').textContent='Огляд';
-  const next=()=>{closeMicro();b.a4.accepted=true;logRow('Виготовлення',{wafer:waferId(),step:'A4',event:'a4_done',param:'pattern',value:b.a4.ok?'track':'inverse',result:''});ST.stage='a4done';saveState();startA5();scrollTo({top:0,behavior:'smooth'})};
-  const redo=()=>{closeMicro();logRow('Виготовлення',{wafer:waferId(),step:'A4',event:'rework',param:'',value:'',result:''});
+  const next=()=>{closeMicro();b.a4.accepted=true;logRow('Виготовлення',{wafer:waferId(),step:'A3',event:'a4_done',param:'pattern',value:b.a4.ok?'track':'inverse',result:''});ST.stage='a4done';saveState();startA5();scrollTo({top:0,behavior:'smooth'})};
+  const redo=()=>{closeMicro();logRow('Виготовлення',{wafer:waferId(),step:'A3',event:'rework',param:'',value:'',result:''});
     b.a2=null;b.a4=null;ST.stage='a2';saveState();$('s-a4').classList.add('hide');showA2();a2say('Переробка: резист знято, пластина '+waferId()+' знову на центрифузі')};
   $('a4panel').innerHTML='<p>Пластина після проявлення. Кольоровий шар – резист, що залишився; металевий – відкритий метал.</p>'+
     '<p><button id="a4look" class="sec">Оглянути під мікроскопом</button></p><p><button id="a4next">Наступний крок</button> <button id="a4redo" class="sec">Переробити фоторезист</button></p>';
@@ -1657,25 +1658,25 @@ function a4Result(){
   $('a4look').onclick=()=>openMicro();
   setTimeout(()=>{if(ST.stage!=='a4done')openMicro()},400/SPEED);
 }
-function showA4Done(){   // без проміжного вікна: лишаємося на A4, наступний крок – у розробці
+function showA4Done(){   // без проміжного вікна: лишаємося на A3, наступний крок – у розробці
   const b=ST.batch;startA4Panel();
   closeMicro();a2Counters();
-  $('a4panel').innerHTML='<p><b>Наступний крок (A5: травлення) ще в розробці.</b></p>'+
+  $('a4panel').innerHTML='<p><b>Наступний крок (A4: травлення) ще в розробці.</b></p>'+
    (DEBUG?'<div class="dbg">DEBUG: полярність '+(b.a4.ok?'правильна':'НЕПРАВИЛЬНА')+'; дефект резисту: '+(b.a2.code||'–')+'</div>':'')+
-   '<p><button id="a4again" class="sec">Повторити крок A4 (тест)</button></p>';
+   '<p><button id="a4again" class="sec">Повторити крок A3 (тест)</button></p>';
   a4Bar('Пластина після задублювання');
   $('a4again').onclick=()=>{b.a4=null;ST.stage='a4';saveState();startA4()};
 }
 function startA4Panel(){['s-a1','s-a2','s-done','s-masks','s-a5','s-a6','s-b'].forEach(id=>$(id).classList.add('hide'));$('s-a4').classList.remove('hide');
   const b=ST.batch;if(b&&b.a4&&b.a4.done){a4Show(true);a4BuildScene();$('a4resist').setAttribute('opacity',0);$('a4tray').setAttribute('opacity',0);$('a4uv').setAttribute('opacity',0);$('a4mask').style.transform='translate(450px,0)';$('a4bot').setAttribute('opacity',0)}}
 
-/* =================== КРОК A5: травлення (2 стадії) і зняття фоторезисту =================== */
+/* =================== КРОК A4: травлення (2 стадії) і зняття фоторезисту =================== */
 const ETS=()=>CFG['Травники']||[];
 const etOf=id=>ETS().find(e=>e.id===id);
 const SUB='#e6ebef';
 const a5S={et:null,acc:1};let a5Ag=0,a5Run=null;
 let A5busy=false;
-function a5say(t){jAdd('A5',t)}
+function a5say(t){jAdd('A4',t)}
 function a5Bar(txt,btn,fn,btn2,fn2){
   $('a5barT').textContent=txt||'';const B=$('a5barB'),B2=$('a5barB2');
   if(btn){B.style.display='';$('a5barBT').textContent=btn;B.onclick=fn}else{B.style.display='none';B.onclick=null}
@@ -1760,9 +1761,9 @@ function a5Panel(){
 }
 const fmtMS=m=>{const sec=Math.floor(m*60);return Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0')};
 function a5UpdCtrl(){a5ShowAg();$('a5Clock').textContent=fmtMS(a5Run?a5Run.t:a5Total());
-  const list=[1].concat(String(P('etch_speedups')||'2;5;10').split(';').map(x=>+x).filter(x=>x>1));let h='<text x="356" y="22" font-size="11" fill="#3b4856">Прискорення часу</text>';
+  const list=[1];let h='<text x="356" y="22" font-size="11" fill="#3b4856">Прискорення часу</text>';
   list.forEach((k,i)=>{const x=356+i*40,on=a5S.acc===k;h+='<g class="tap" data-a="'+k+'"><rect x="'+x+'" y="28" width="36" height="22" rx="5" fill="'+(on?'#1f6fb2':'#5d6b78')+'"/><text x="'+(x+18)+'" y="43" font-size="11.5" text-anchor="middle" fill="#fff" font-weight="700">×'+k+'</text></g>'});
-  $('a5acc').innerHTML=h;[...$('a5acc').querySelectorAll('g.tap')].forEach(g=>g.onclick=()=>{a5S.acc=+g.dataset.a;a5UpdCtrl()});}
+  $('a5acc').innerHTML='';a5S.acc=1;return;[...$('a5acc').querySelectorAll('g.tap')].forEach(g=>g.onclick=()=>{a5S.acc=+g.dataset.a;a5UpdCtrl()});}
 function a5ShowAg(){$('a5Agit').textContent=Math.round(a5Ag*100)+' %'}
 /* положення пластини: k=0 – у лотку, k=1 – у ванночці; пінцет: rest або тримає пластину */
 const A5OUT={x:432,y:240,s:.45},A5IN={x:200,y:170,s:1},A5TWR={x:505,y:128,a:195};let a5K=0,a5Hold=false;
@@ -1831,27 +1832,28 @@ function a5ChipInner_(SUB0){
   const b=ST.batch,t=CFG.templates.find(x=>x.id===b.a4.cfg),r=resOf(b.a2.res),M=CHIP_EDGE&&!CHIP_NOPAL,mc=M?a5MicC(ST.metal):mat(ST.metal).color,tc=M?a5MicC('Ti'):mat('Ti').color,SUB=M?a5MicC('sub'):SUB0,ok=b.a4.ok,lv=a5Level(),s=b.a5;
   const islands=(c,n)=>{let h='',x=13;for(let i=0;i<n;i++){x=(x*41+17)%97;const y=(x*59+i*31)%91;h+='<ellipse cx="'+(x+2)+'" cy="'+(y+4)+'" rx="2.6" ry="1.8" fill="'+c+'"/>'}return h};
   const P=(b.t_me-s.me.rem+s.me.ex)/b.t_me,Q=(b.t_ti-s.ti.rem+s.ti.ex)/b.t_ti;
-  let open=a5Layer(Q,s.ti.dl||0,3,tc)+a5Layer(P,s.me.dl||0,2,mc);   // підшар Ti під металом
+  let open=a5Layer(Q,s.ti.dl||0,3,tc)+a5Layer(P,s.me.dl||0,2,mc),ext='';   // підшар Ti під металом
   const code=b.a2.code;
-  if(code==='thick'||code==='resist_thick')open+=islands(mc,30);
+  if(code==='thick'||code==='resist_thick'){open+=islands(mc,30);ext=islands(mc,30)}
   if(code==='short')open+='<path d="M0 20 Q50 5 100 25 L100 38 Q50 18 0 33 Z" fill="'+mc+'" opacity=".6"/>';
   const over=a5Over(),bad=over>(num('etch_over_bad')||1);
   let h;
   if(ok){
     CHIP_WK=a5Wk();   // перетрав: бокове підтравлювання – доріжка вужча за резист
-    h='<rect width="100" height="100" fill="'+SUB+'"/>'+open+chipInner(t,mc,'transparent');CHIP_WK=1;
+    h=(A5_NB?ext:'<rect width="100" height="100" fill="'+SUB+'"/>'+open)+chipInner(t,mc,'transparent');CHIP_WK=1;
     if(code==='thin'&&s.me.rem===0){let x=5;for(let i=0;i<26;i++){x=(x*37+11)%97;h+='<circle cx="'+(x+2)+'" cy="'+((x*53+i*29)%93+3)+'" r="1.2" fill="'+SUB+'"/>'}}
     if(bad)h+='<path d="M20 30 L80 30" stroke="'+SUB+'" stroke-width="4"/><path d="M30 55 L70 55" stroke="'+SUB+'" stroke-width="4"/>';
     if(!s.stripped)h+='<g opacity=".6">'+chipInner(t,r.color,'transparent')+'</g>';
   }else{  // неправильний фотошаблон: резист на полі, доріжка відкрита
     const tr=(lv==='me_heavy'||lv==='me_bridges')?mc:(lv==='clean'?SUB:tc);
-    h='<rect width="100" height="100" fill="'+mc+'"/>'+chipInner(t,tr,'transparent');
+    h=(A5_NB&&s.stripped?'':'<rect width="100" height="100" fill="'+mc+'"/>')+chipInner(t,tr,'transparent');
     if(!s.stripped)h+='<rect width="100" height="100" fill="'+r.color+'" opacity=".7"/>'+chipInner(t,tr,'transparent');
   }
   return h.replace(/<rect width="100" height="100" fill="transparent"\/>/g,'');
 }
 function a5DrawWafer(){
-  const inner=a5ChipInner(),g=chipGrid();
+  A5_NB=true;let inner;try{inner=a5ChipInner()}finally{A5_NB=false}
+  const g=chipGrid();
   $('a5wafer').innerHTML='<defs><clipPath id="a5clip"><path d="M222 284 A125 125 0 1 1 298 284 Z"/></clipPath><symbol id="symA5" viewBox="0 0 100 100">'+inner+'</symbol></defs>'+
     '<g transform="translate(200 170) scale(.88) translate(-260 -165)"><g clip-path="url(#a5clip)">'+(ST.batch.a4.ok?'<g transform="translate(130 35) scale(2.6)">'+a5Open()+'</g>':'<rect x="130" y="35" width="260" height="260" fill="'+(ST.batch.a5.stripped?mat(ST.metal).color:resOf(ST.batch.a2.res).color)+'"/>')+
     g.map(([x,y])=>'<use href="#symA5" x="'+x+'" y="'+y+'" width="24" height="24"/>').join('')+'</g><path d="M222 284 A125 125 0 1 1 298 284 Z" fill="none" stroke="#5f6b77" stroke-width="1.5"/></g>';
@@ -1874,7 +1876,7 @@ async function a5Etch(){   // пінцетом занурити пластину
   $('a5liq').setAttribute('transform','');$('a5liqTop').setAttribute('transform','');a5Ag=0;a5ShowAg();a5DrawWafer();
   a5Bar('Пластину витягнуто, промивання водою…');await a5Move(false);
   b.a5.steps.push({e:e.id,st:b.a5.stage,t:+t.toFixed(2),agit:+avg.toFixed(2)});$('a5Clock').textContent=fmtMS(a5Total());b.stage2='etched';saveState();a2Counters();A5busy=false;
-  logRow('Виготовлення',{wafer:waferId(),step:'A5',event:'etch',param:'etchant;min;agit_avg',value:e.id+';'+t.toFixed(2)+';'+avg.toFixed(2),result:a5Level()});
+  logRow('Виготовлення',{wafer:waferId(),step:'A4',event:'etch',param:'etchant;min;agit_avg',value:e.id+';'+t.toFixed(2)+';'+avg.toFixed(2),result:a5Level()});
   a5say('Пластину витягнуто через '+fmtMS(t)+(t0>0?' (усього на стадії '+fmtMS(t0+t)+')':'')+' (похитування в середньому '+Math.round(avg*100)+' %), промивання водою. Стан: '+A5TXT[a5Level()]);
   a5Inspect();
 }
@@ -1910,8 +1912,8 @@ function a5Final(){
   else if(code)why=tpl(P('msg_A2_'+code),{resist:resOf(b.a2.res).name,rpm:b.a2.rpm,t:b.a2.t,h:fmt(b.a2.h,2),h_best:'',h_min:fmt(num('resist_h_min_um'),1),h_max:fmt(num('resist_h_max_um'),1),rpm_max:num('spin_rpm_max'),t_min:num('spin_t_red_min'),t_g1:P('spin_t_green_min'),t_g2:P('spin_t_green_max')})+' Після травлення це видно на пластині.';
   else if(lv!=='clean')why='Недотрав: '+A5TXT[lv]+'. Залишки провідного шару замикають витки змійки – сенсор не працюватиме.';
   else if(over>(num('etch_over_bad')||1))why='Сильний перетрав: резист відшарувався під час травлення, доріжку протравлено, є обриви.';
-  logRow('Виготовлення',{wafer:waferId(),step:'A5',event:'a5_result',param:'level;over',value:lv+';'+fmt(over,2),result:why?'scrap':'ok'});
-  if(why){failWafer('A5',why);return}
+  logRow('Виготовлення',{wafer:waferId(),step:'A4',event:'a5_result',param:'level;over',value:lv+';'+fmt(over,2),result:why?'scrap':'ok'});
+  if(why){failWafer('A4',why);return}
   b.a5.done=true;b.a5.warn=over>(num('etch_over_warn')||0.5);saveState();
   const t=CFG.templates.find(x=>x.id===b.a4.cfg);
   a5Loupe('Фоторезист знято. Металева змійка на чистій підкладці'+(b.a5.warn?', але доріжка трохи підтравлена (перетрав) – опір буде дещо вищим.':'.')+'<br><b>Перейти до наступного кроку?</b>','Наступний крок',a5Next,'Закрити',()=>{});
@@ -1921,8 +1923,8 @@ function a5Final(){
 function a5Next(){
   const b=ST.batch;b.a5.accepted=true;ST.stage='a5done';saveState();renderReport();startA6();scrollTo({top:0,behavior:'smooth'});
 }
-/* =================== КРОК A6: скрайбування, перевірка опору, пайка =================== */
-function a6say(t){jAdd('A6',t)}
+/* =================== КРОК A5: скрайбування, перевірка опору, пайка =================== */
+function a6say(t){jAdd('A5',t)}
 function a6Bar(txt,btn,fn,btn2,fn2){$('a6barT').textContent=txt||'';const B=$('a6barB'),B2=$('a6barB2');if(btn){B.style.display='';$('a6barBT').textContent=btn;B.onclick=fn}else{B.style.display='none';B.onclick=null}
   if(btn2){B2.style.display='';$('a6barB2T').textContent=btn2;B2.onclick=fn2}else{B2.style.display='none';B2.onclick=null}}
 const A6C={cx:260,cy:165,R:125,flat:284},A6S=21,A6O=2;   // чип у клітинці 25 px: 21 px + «вулиця» 4 px
@@ -1938,8 +1940,8 @@ function a6SideCut(sd,strokes){const [o,g,a,b]=sd;
     if(!ok)return false}
   return true}
 function a6Progress(){const a=ST.batch.a6,C=a6Chips(),st=a.strokes||[];let n=0;C.forEach(c=>{if(a6Sides(c).every(sd=>a6SideCut(sd,st)))n++});return {n,N:C.length}}
-const A6=()=>ST.batch.a6;
-function a6Rot(){return A6().rot||0}
+const A5=()=>ST.batch.a6;
+function a6Rot(){return A5().rot||0}
 function a6ToWafer(x,y){const r=-a6Rot()*Math.PI/180,{cx,cy}=A6C,dx=x-cx,dy=y-cy;return [cx+dx*Math.cos(r)-dy*Math.sin(r),cy+dx*Math.sin(r)+dy*Math.cos(r)]}
 function a6SvgPt(e){const sv=$('a6scene'),pt=sv.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(sv.getScreenCTM().inverse());return [q.x,q.y]}
 /* різак ріже по прямій, як по лінійці: студент виставляє вертикальну напрямну, клік – автоматичний різ */
@@ -1948,19 +1950,19 @@ let A6gx=null;
   const hit=$('a6hit');let d0=null;
   const guide=x=>{A6gx=Math.max(20,Math.min(500,x));let g=$('a6guide');if(!g){g=document.createElementNS('http://www.w3.org/2000/svg','g');g.id='a6guide';g.setAttribute('pointer-events','none');$('a6scribe').insertBefore(g,$('a6scr'))}
     g.innerHTML='<line x1="'+A6gx.toFixed(1)+'" y1="14" x2="'+A6gx.toFixed(1)+'" y2="318" stroke="#1f6fb2" stroke-width="1" stroke-dasharray="5 3"/><path d="M'+(A6gx-7).toFixed(1)+' 6 L'+(A6gx+7).toFixed(1)+' 6 L'+A6gx.toFixed(1)+' 15 Z" fill="#1f6fb2"/>'};
-  hit.addEventListener('pointermove',e=>{const a=A6();if(!a||a.phase!=='scribe'||A6busy)return;guide(a6SvgPt(e)[0])});
-  hit.addEventListener('pointerdown',e=>{const a=A6();if(!a||a.phase!=='scribe'||A6busy)return;e.preventDefault();hit.setPointerCapture(e.pointerId);d0=a6SvgPt(e)[0];guide(d0)});
+  hit.addEventListener('pointermove',e=>{const a=A5();if(!a||a.phase!=='scribe'||A6busy)return;guide(a6SvgPt(e)[0])});
+  hit.addEventListener('pointerdown',e=>{const a=A5();if(!a||a.phase!=='scribe'||A6busy)return;e.preventDefault();hit.setPointerCapture(e.pointerId);d0=a6SvgPt(e)[0];guide(d0)});
   hit.addEventListener('pointerup',e=>{if(d0==null)return;const x=a6SvgPt(e)[0],moved=Math.abs(x-d0)>4;d0=null;if(!moved&&A6gx!=null)a6CutAt(A6gx)});
   hit.addEventListener('pointercancel',()=>{d0=null});
 })();
 async function a6CutAt(x){
-  const a=A6();if(!a||a.phase!=='scribe'||A6busy)return;A6busy=true;const sc=$('a6scr'),y0=24,y1=308;sc.style.display='';
+  const a=A5();if(!a||a.phase!=='scribe'||A6busy)return;A6busy=true;const sc=$('a6scr'),y0=24,y1=308;sc.style.display='';
   let el=document.createElementNS('http://www.w3.org/2000/svg','line');el.setAttribute('stroke','#1c2733');el.setAttribute('stroke-width','1.2');el.setAttribute('x1',x);el.setAttribute('x2',x);el.setAttribute('y1',y0);$('a6scribe').insertBefore(el,$('a6scr'));
   await tween(550,k=>{const y=y0+(y1-y0)*k;el.setAttribute('y2',y);sc.setAttribute('transform','translate('+x.toFixed(1)+' '+y.toFixed(1)+')')});
   sc.style.display='none';el.remove();A6busy=false;a6Stroke({w:[a6ToWafer(x,y0),a6ToWafer(x,y1)]});
 }
 function a6Stroke(d){
-  const a=A6();
+  const a=A5();
   const st={p:d.w.map(q=>[+q[0].toFixed(1),+q[1].toFixed(1)])};a.strokes=a.strokes||[];a.strokes.push(st);
   // різець зачепив провідний шар чипа – чип зіпсовано
   const C=a6Chips(),bad=new Set(a.bad||[]),hitNew=[];
@@ -1968,17 +1970,17 @@ function a6Stroke(d){
     for(let m=0;m<=n;m++){const x=p[0]+(q[0]-p[0])*m/n,y=p[1]+(q[1]-p[1])*m/n;
       C.forEach(c=>{if(!bad.has(c.i)&&x>c.cx0&&x<c.cx1&&y>c.cy0&&y<c.cy1){bad.add(c.i);hitNew.push(c.i)}})}}
   a.bad=[...bad];
-  if(hitNew.length){a6say('Різець зачепив доріжку: зіпсовано чипів – '+hitNew.length+' (брак)');logRow('Виготовлення',{wafer:waferId(),step:'A6',event:'scribe_hit',param:'chips',value:hitNew.length,result:'scrap_chip'})}
+  if(hitNew.length){a6say('Різець зачепив доріжку: зіпсовано чипів – '+hitNew.length+' (брак)');logRow('Виготовлення',{wafer:waferId(),step:'A5',event:'scribe_hit',param:'chips',value:hitNew.length,result:'scrap_chip'})}
   const pr=a6Progress();
-  if(a.bad.length>=pr.N){saveState();failWafer('A6','Під час скрайбування різець зачепив доріжки всіх чипів – придатних сенсорів не лишилося.');return}
-  if(pr.n>=pr.N){a.phase='break';a6say('Усі чипи відрізано з усіх боків ('+a.strokes.length+' ліній)');logRow('Виготовлення',{wafer:waferId(),step:'A6',event:'scribed',param:'lines;bad',value:a.strokes.length+';'+a.bad.length,result:''})}
+  if(a.bad.length>=pr.N){saveState();failWafer('A5','Під час скрайбування різець зачепив доріжки всіх чипів – придатних сенсорів не лишилося.');return}
+  if(pr.n>=pr.N){a.phase='break';a6say('Усі чипи відрізано з усіх боків ('+a.strokes.length+' ліній)');logRow('Виготовлення',{wafer:waferId(),step:'A5',event:'scribed',param:'lines;bad',value:a.strokes.length+';'+a.bad.length,result:''})}
   saveState();a6Wafer();
 }
-async function a6Turn(){if(A6busy)return;A6busy=true;const a=A6(),r0=a6Rot(),r1=r0+90,{cx,cy}=A6C;
+async function a6Turn(){if(A6busy)return;A6busy=true;const a=A5(),r0=a6Rot(),r1=r0+90,{cx,cy}=A6C;
   await tween(450,k=>$('a6rot').setAttribute('transform','rotate('+(r0+90*k).toFixed(1)+' '+cx+' '+cy+')'));a.rot=r1%360;saveState();A6busy=false;a6Wafer()}
 /* ---- пластина, лінії, розлам ---- */
 function a6Wafer(){
-  const a=A6();a.strokes=a.strokes||[];a.bad=a.bad||[];const broken=a.phase==='pick',bad=new Set(a.bad),C=a6Chips(),{cx,cy}=A6C,pr=a6Progress();
+  const a=A5();a.strokes=a.strokes||[];a.bad=a.bad||[];const broken=a.phase==='pick',bad=new Set(a.bad),C=a6Chips(),{cx,cy}=A6C,pr=a6Progress();
   $('a6Lines').textContent=pr.n+' / '+pr.N;
   $('a6rot').setAttribute('transform',broken?'':'rotate('+a6Rot()+' '+cx+' '+cy+')');
   $('a6hit').style.display=a.phase==='scribe'?'':'none';
@@ -1988,14 +1990,14 @@ function a6Wafer(){
         (b?'<path d="M'+(c.X+2)+' '+(c.Y+2)+' l'+(A6S-4)+' '+(A6S-4)+' M'+(c.X+A6S-2)+' '+(c.Y+2)+' l'+(4-A6S)+' '+(A6S-4)+'" stroke="#c0392b" stroke-width="2"/>':'')+'</g>'}).join('');
   $('a6lines').innerHTML=broken?'':a.strokes.map(st=>'<polyline points="'+st.p.map(q=>q.join(',')).join(' ')+'" fill="none" stroke="#1c2733" stroke-width="1.1"/>').join('');
   [...$('a6wafer').querySelectorAll('.a6chip')].forEach(el=>el.onclick=()=>a6Pick(+el.dataset.x,+el.dataset.y));
-  const nb=a.bad.length?'<p style="color:#b03a2e">Зіпсовано чипів (різець зачепив доріжку): <b>'+a.bad.length+'</b>.</p>':'';
+  const nbad=a.bad.length-(a.used||0),nb=nbad?'<p style="color:#b03a2e">Зіпсовано чипів (різець зачепив доріжку): <b>'+nbad+'</b>.</p>':'';
   if(a.phase==='scribe'){a6Bar('Наведіть напрямну на «вулицю» і клацніть','Повернути на 90°',a6Turn,'Різати',()=>{if(A6gx!=null)a6CutAt(A6gx)});
     $('a6panel').innerHTML='<p><b>Скрайбування.</b> Різак ріже по прямій, як по лінійці, лише <b>вертикально</b>. Наведіть мишею синю напрямну на «вулицю» між чипами і клацніть – алмазний різець автоматично проведе подряпину через усю пластину (на телефоні: пересуньте напрямну пальцем і натисніть «Різати»). Для ліній в іншому напрямку <b>поверніть пластину</b> (можна багато разів).</p>'+
       '<p><b>Не забудьте відрізати зайві частини пластини по краях:</b> кожен чип має бути відрізаний з усіх чотирьох боків.</p>'+
       '<p>Якщо різець зачепить провідну доріжку чи площадку, чип буде зіпсовано (брак).</p><p id="a6hint"></p>'+
       '<p>Відрізано з усіх боків: <b>'+pr.n+' з '+pr.N+'</b> чипів.</p>'+nb}
   else if(a.phase==='break'){a6Bar('Усі чипи відрізано','Розламати',a6Break);$('a6panel').innerHTML='<p>Усі чипи відрізано з усіх боків. Розламайте пластину по подряпинах.</p>'+nb}
-  else{a6Bar('Торкніться цілого чипа, щоб узяти його');$('a6panel').innerHTML='<p>Пластину розламано на <b>'+a.nchips+'</b> сенсорів'+(a.bad.length?', з них <b>'+a.bad.length+'</b> зіпсовано під час скрайбування':'')+'. Цілі чипи однакові – візьміть будь-який для вимірювань. Залишки по краю пластини – відходи.</p>'}
+  else{a6Bar('Торкніться цілого чипа, щоб узяти його');$('a6panel').innerHTML='<p>Пластину розламано на <b>'+a.nchips+'</b> сенсорів'+(a.bad.length-(a.used||0)?', з них <b>'+(a.bad.length-(a.used||0))+'</b> зіпсовано під час скрайбування':'')+(a.used?', використано раніше: <b>'+a.used+'</b>':'')+'. Цілі чипи однакові – візьміть будь-який для вимірювань. Залишки по краю пластини – відходи.</p>'}
 }
 let A6busy=false;
 /* модель опору: R = R□·L/w; 1/R□ = t_мет/ρ_мет + t_Ti/ρ_Ti (ρ плівки = ρ об'ємний × множник) */
@@ -2059,13 +2061,13 @@ async function a6Pad(i,kf){
     A6busy=true;const [x0,y0]=A6REST[k],[x1,y1]=A6PAD[i];
     await tween(500,q=>a6Probe(k,x0+(x1-x0)*q,y0+(y1-y0)*q));pr[ix]=i;a.probes=pr;
     if(pr.every(x=>x!=null)){$('a6mmT').textContent='. . .';await sleep(600);a.R=+a6Model().R.toFixed(2);a6say('Виміряний опір: '+fmt(a.R,1)+' Ом');
-      logRow('Виготовлення',{wafer:waferId(),step:'A6',event:'R_room',param:'R_ohm',value:a.R.toFixed(2),result:''})}
+      logRow('Виготовлення',{wafer:waferId(),step:'A5',event:'R_room',param:'R_ohm',value:a.R.toFixed(2),result:''})}
     saveState();A6busy=false;a6Scene();renderReport();return}
   if(a.phase==='solder'){
     if(a.wires[i])return;A6busy=true;const [x1,y1]=A6PAD[i],x0=380,y0=300;
     await tween(500,q=>a6Iron(x0+(x1-x0)*q,y0+(y1-y0)*q));await sleep(400);a.wires[i]=true;$('a6wires').innerHTML=a.wires.map((w,j)=>w?a6WireSVG(j):'').join('');
     await tween(450,q=>a6Iron(x1+(x0-x1)*q,y1+(y0-y1)*q));a6say('Припаяно вивід '+(i+1));
-    if(a.wires.every(Boolean)){a.phase='done';ST.stage='a6done';logRow('Виготовлення',{wafer:waferId(),step:'A6',event:'soldered',param:'',value:'',result:'ok'});a6say('Сенсор готовий')}
+    if(a.wires.every(Boolean)){a.phase='done';ST.stage='a6done';logRow('Виготовлення',{wafer:waferId(),step:'A5',event:'soldered',param:'',value:'',result:'ok'});a6say('Сенсор готовий')}
     saveState();A6busy=false;a6Scene();renderReport()}
 }
 function a6Fml(mc){const r=(n,f)=>'<div class="fr"><span>'+n+'</span><span>'+f+'</span></div>';
@@ -2113,7 +2115,7 @@ function a6Panel(M){
     $('a6panel').innerHTML='<p><b>Пайка виводів.</b> Припаяйте мідні дроти до обох контактних площадок: торкніться кожної площадки, і паяльник залудить її та припаяє вивід.</p>';
   }else{
     a6Bar('Сенсор готовий');
-    $('a6panel').innerHTML='<p><b>Сенсор готовий:</b> плівка Ti/'+mc+', опір при кімнатній температурі '+fmt(a.R,1)+' Ом, виводи припаяно.</p><p><button id="a6toB">Далі: Частина B – вимірювання R(T)</button></p><p><button id="a6again" class="sec">Повторити крок A6 (тест)</button></p>';
+    $('a6panel').innerHTML='<p><b>Сенсор готовий:</b> плівка Ti/'+mc+', опір при кімнатній температурі '+fmt(a.R,1)+' Ом, виводи припаяно.</p><p><button id="a6toB">Далі: Частина B – вимірювання R(T)</button></p><p><button id="a6again" class="sec">Повторити крок A5 (тест)</button></p>';
     $('a6toB').onclick=()=>{startB();scrollTo({top:0,behavior:'smooth'})};
     $('a6again').onclick=()=>{ST.batch.a6=null;ST.stage='a6';saveState();startA6()};
   }
@@ -2127,18 +2129,46 @@ function bRho(m,T){const q=mat(m),rb=+q.rho_bulk_uohm_cm,f=+q.rho_film_factor||1
 function bRmodel(sm,T){return sm.LW/(sm.dm*1e-9/(bRho(sm.m,T)*1e-8)+sm.dt*1e-9/(bRho('Ti',T)*1e-8))}
 function bSamples(){
   const b=ST.batch,G=a6Geom(),own={id:'own',name:'Виготовлений сенсор',m:ST.metal,dm:b.t_me,dt:b.t_ti,LW:G.L/(G.w*a5Wk())};
-  own.k=b.a6&&b.a6.R?b.a6.R/bRmodel(own,20):1;   // узгодження з виміряним у A6 опором
+  own.k=b.a6&&b.a6.R?b.a6.R/bRmodel(own,20):1;   // узгодження з виміряним у A5 опором
   // тестовий: той самий фотошаблон і метал, середня товщина плівки (з аркуша «Тестові_сенсори»)
   const tc=(CFG.tests||[])[0]||{},test={id:'test',name:'Тестовий сенсор',m:ST.metal,dm:+tc.t_metal_nm||225,dt:+tc.t_ti_nm||15,LW:G.L/G.w,k:1};
   return {own,test};
 }
 function bInit(){if(!ST.B)ST.B={T:20,Tset:20,power:false,door:false,inC:{},ch:1,range:'auto',tab:'own',acc:1,tables:{own:[],test:[]},simT:0};ST.B.ch=ST.B.ch||1;bIn();return ST.B}
+
+/* ---- навігація з частини B: перегляд попередніх кроків і повторне виготовлення сенсорів ---- */
+function stepDocs(){const out=[];(window.NAVSECS||[]).forEach(id=>{
+  if(id[0]==='@'){const f=window['doc'+id.slice(1)];if(typeof f==='function')out.push(f());return}
+  const s=$(id);if(!s)return;const t=s.querySelector('.steph'),k=s.querySelector('.task'),h=s.querySelector('details.help>div');
+  out.push({t:t?t.textContent:id,task:k?k.innerHTML:'',help:h?h.innerHTML:''})});return out}
+function openSteps(){
+  let m=$('stepsModal');if(!m){m=document.createElement('div');m.id='stepsModal';m.className='hide';m.style.cssText='position:fixed;inset:0;background:rgba(10,20,30,.55);display:flex;align-items:center;justify-content:center;z-index:40;padding:16px';
+    m.onclick=e=>{if(e.target===m)m.classList.add('hide')};document.body.appendChild(m)}
+  const rep=$('repB')?$('repB').innerHTML:'';
+  m.innerHTML='<div style="background:#fff;border-radius:12px;padding:18px 22px;max-width:760px;width:100%;position:relative;max-height:88vh;overflow:auto"><button type="button" id="stepsX" style="position:absolute;right:10px;top:6px;background:transparent;color:#5d6b78;font-size:24px;border:0;cursor:pointer" aria-label="Закрити">×</button><h3 style="margin:0 0 6px">Попередні кроки (перегляд)</h3><p style="margin:0 0 10px;color:#5d6b78;font-size:14px">Лише перегляд: нічого не змінюється, вимірювання частини B зберігаються.</p>'+
+    '<details open><summary><b>Звіт про виготовлення</b></summary><div class="rep">'+rep+'</div></details>'+
+    stepDocs().map(d=>'<details style="margin-top:8px"><summary><b>'+d.t+'</b></summary><div style="padding:6px 0 0 4px;font-size:14px">'+(d.task?'<div class="card task" style="margin:0 0 8px">'+d.task+'</div>':'')+(d.help?'<div style="color:#3b4856">'+d.help+'</div>':'')+'</div></details>').join('')+'</div>';
+  m.classList.remove('hide');$('stepsX').onclick=()=>m.classList.add('hide')}
+function bNavInit(){
+  if($('bNav'))return;const c=document.createElement('div');c.className='card';c.id='bNav';
+  c.innerHTML='<p style="display:flex;gap:8px;flex-wrap:wrap;margin:0"><button type="button" class="sec" id="bViewSteps">Переглянути попередні кроки</button><button type="button" class="sec" id="bRestart">Почати вимірювання спочатку</button><button type="button" class="sec" id="bRedo">Виготовити сенсори заново</button></p>';
+  const r=$('repB');r.parentNode.insertBefore(c,r);
+  $('bViewSteps').onclick=openSteps;
+  $('bRestart').onclick=()=>{if(!confirm('Почати вимірювання спочатку? Усі відліки та запис частини B буде скинуто, сенсори лишаються ті самі.'))return;
+    if(BRun){clearInterval(BRun);BRun=null}try{if(typeof bSerKey==='function')localStorage.removeItem(bSerKey())}catch(e){}
+    ST.B=null;saveState();bsay('Вимірювання розпочато спочатку');startB();scrollTo({top:0,behavior:'smooth'})};
+  $('bRedo').onclick=()=>{if(!confirm('Виготовити сенсори заново? Поточні сенсори й усі вимірювання частини B буде скинуто; використані чипи повторно взяти не можна. Продовжити?'))return;
+    if(BRun){clearInterval(BRun);BRun=null}bRedoImpl();scrollTo({top:0,behavior:'smooth'})}}
+window.NAVSECS=['s-a1','s-a2','s-a4','s-a5','s-a6'];
+function bRedoImpl(){const b=ST.batch,a=b.a6;
+  if(a.chip){const i=chipGrid().findIndex(([x,y])=>x===a.chip[0]&&y===a.chip[1]);a.bad=a.bad||[];if(i>=0&&!a.bad.includes(i)){a.bad.push(i);a.used=(a.used||0)+1}}
+  a.chip=null;a.probes=[];a.R=null;a.Rcalc=null;a.wires=[false,false];a.phase='pick';ST.B=null;ST.stage='a6';a6say('Сенсор виготовляємо заново: беремо інший чип з тієї самої пластини');saveState();renderReport();startA6()}
 function startB(){
   const B=bInit();ST.stage='b';saveState();
   document.querySelectorAll('section[id^="s-"]').forEach(x=>x.classList.add('hide'));$('s-b').classList.remove('hide');closeMicro();
   const pmin=num('points_min')||20,pmax=num('points_max')||30,Tmin=num('T_min')||20,Tmax=num('T_max')||80;
   $('btask').innerHTML='<b>Завдання.</b> Виміряйте залежність опору від температури для <b>виготовленого сенсора</b> і <b>тестового</b> в діапазоні '+Tmin+'–'+Tmax+' °C: '+pmin+'–'+pmax+' точок для кожного. Покладіть обидва зразки в камеру (торкніться їх на лотку) – вони підключені до каналів 1 і 2 комутатора, увімкніть живлення камери (клавіша | O), задайте уставку, дочекайтеся стабілізації (лампа «УСТАВКА», показ омметра перестає змінюватися) і додайте точку.';
-  renderReport();jRender();bTray();bSetDrum();bAccel();bDraw();bTable();bChart();bPanel();
+  renderReport();jRender();bTray();bSetDrum();bAccel();bDraw();bTable();bChart();bPanel();bNavInit();
   if(!BRun)BRun=setInterval(bTick,100);
 }
 /* ---- органи керування ---- */
@@ -2343,14 +2373,14 @@ function renderReport(){
     const K=num('etch_agit_k')||2,g={};b.a5.steps.forEach(x=>{const q=g[x.e]||(g[x.e]={t:0,te:0});q.t+=x.t;q.te+=x.t*(1+(K-1)*(x.agit||0))});
     rows.push(['Травлення',Object.entries(g).map(([id,q])=>{const e=etOf(id);return (e?e.formula:id)+' – '+fmtMS(q.t)+(q.te-q.t>q.t*0.03?' (ефективний час '+fmtMS(q.te)+')':'')}).join('<br>')+(b.a5.warn?'<br>невеликий перетрав':'')])}
   if(b&&b.a6){const a=b.a6;
-    if(a.phase!=='scribe'&&a.nchips)rows.push(['Скрайбування',a.nchips+' чипів'+((a.bad||[]).length?', зіпсовано '+a.bad.length:'')+'; для вимірювань узято 1']);
+    if(a.phase!=='scribe'&&a.nchips)rows.push(['Скрайбування',a.nchips+' чипів'+((a.bad||[]).length-(a.used||0)>0?', зіпсовано '+((a.bad||[]).length-(a.used||0)):'')+'; для вимірювань узято 1']);
     if(a.R!=null)rows.push(['Опір при кімнатній т-рі','R = '+fmt(a.R,1)+' Ом'+(a.Rcalc!=null?' (розрахунок '+fmt(a.Rcalc,1)+' Ом, відхилення '+fmt(Math.abs(a.Rcalc-a.R)/a.R*100,0)+' %)':'')]);
     if(a.wires&&a.wires.every(Boolean))rows.push(['Виводи','припаяно 2 дроти до контактних площадок'])}
   if(ST.B){const t=ST.B.tables||{};const n=k=>(t[k]||[]).length;if(n('own')||n('test'))rows.push(['Вимірювання R(T)','виготовлений сенсор: '+n('own')+' точок<br>тестовий: '+n('test')+' точок'])}
   const h='<h2>Звіт</h2><table>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('')+'</table>';
   if(renderReport.last===h)return;renderReport.last=h;['rep1','rep2','rep4','rep5','rep6','repB'].forEach(id=>{const e=$(id);if(e)e.innerHTML=h});
 }
-/* ---------- шапка, меню, футер (спільні дані – ../site.js) ---------- */
+/* ---------- шапка, меню, футер (спільні дані – ../../site.js) ---------- */
 (function(){
   const S=Object.assign({course:'Електронні сенсори',university:'КПІ ім. Ігоря Сікорського',department:'Кафедра електронної інженерії, мікро- та наносистемної техніки',author:'Шевлякова Ганна Вікторівна',credit:'Виконано з використанням Claude (Anthropic)',year:'2026',labs:[],about_course:'',about_author:''},window.SITE||{});
   $('hCourse').textContent=S.course;

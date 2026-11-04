@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ЛР 1. Оптична ширина забороненої зони органічних напівпровідників</title>
+<style>
+  main{max-width:1280px;margin:0 auto;padding:14px 12px}
+  .lr{font-size:12px;font-weight:bold;color:var(--acc);text-transform:uppercase;letter-spacing:.04em}
+  h1{font-size:22px;margin:2px 0 12px;line-height:1.25}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+  select{width:100%;font:inherit;font-size:16px;padding:9px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .btn{font:inherit;font-size:15px;padding:10px 14px;border-radius:8px;border:1px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer;touch-action:manipulation}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.sec{background:#fff;color:var(--acc)}
+  .btn.big{width:100%;font-size:17px;font-weight:bold;padding:13px}
+  .demo{font-size:12px;background:#fff4d6;border:1px solid #f0d58a;border-radius:8px;padding:6px 10px;margin-bottom:10px}
+  #login{max-width:460px}
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;align-items:start}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  h2{font-size:17px;margin:0 0 6px}
+  .task{font-size:14px;margin:0 0 8px;line-height:1.45}
+  details{font-size:13.5px;line-height:1.5;margin-bottom:10px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+  summary{cursor:pointer;font-weight:bold;color:var(--acc)}
+  details table{border-collapse:collapse;font-size:12px;margin:6px 0}
+  details td,details th{border:1px solid var(--line);padding:2px 6px;text-align:center}
+  .f{font-family:"Times New Roman",serif;font-style:italic;font-size:15px}
+  .scene{position:relative;background:linear-gradient(#eef1f4,#dfe4ea);border:1px solid var(--line);border-radius:12px;overflow:hidden;user-select:none;-webkit-user-select:none}
+  .scene svg{display:block;width:100%;height:auto}
+  #zm{display:none;background:linear-gradient(#f3f5f7,#e3e8ee)}
+  .scene.zoomed #ov{display:none}
+  .scene.zoomed #zm{display:block;animation:zin .35s ease-out}
+  @keyframes zin{from{opacity:0;transform:scale(.35)}to{opacity:1;transform:scale(1)}}
+  .hint{font-size:13.5px;min-height:20px;margin:6px 2px 0;color:#24425f}
+  .hint.warn{color:#a3420c}
+  .clk{cursor:pointer}
+  .drag{cursor:ns-resize;touch-action:none}
+  .panel{display:flex;flex-direction:column;gap:10px}
+  .who{font-size:13px;line-height:1.5}
+  .who b{font-size:14px}
+  .link{background:none;border:none;color:var(--acc);font:inherit;font-size:13px;cursor:pointer;padding:0;text-decoration:underline}
+  .clist{list-style:none;margin:6px 0 0;padding:0;font-size:13.5px}
+  .clist li{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dashed var(--line)}
+  .clist li.cur{font-weight:bold}
+  .ok{color:#127a3a}
+  .tblwrap{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+  table.res{border-collapse:collapse;width:100%;font-size:12.5px}
+  table.res th{position:sticky;top:0;background:#eef3f9;font-weight:bold;z-index:1}
+  table.res th,table.res td{border-bottom:1px solid var(--line);padding:4px 5px;text-align:right;white-space:nowrap}
+  table.res td:first-child,table.res th:first-child{text-align:left}
+  table.res td.bad{background:#fff1e6;color:#a3420c}
+  table.res tr.extra td:first-child{color:#a3420c}
+  table.res td.cc{background:#f2f7fd}
+  .del{border:none;background:none;color:#b33;cursor:pointer;font-size:14px;padding:0 2px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .row .btn{flex:1}
+  .dbg{font:12px monospace;background:#222;color:#9f9;padding:6px 8px;border-radius:8px;white-space:pre-wrap;word-break:break-all}
+
+</style>
+</head>
+<body data-root="../">
+<main>
+  <div class="lr">Лабораторна робота №1</div>
+  <h1>Оптична ширина забороненої зони органічних напівпровідників</h1>
+
+  <section id="login" class="card">
+    <div id="demoNote" class="demo" hidden>Демо-режим: список студентів умовний, статус нікуди не надсилається.</div>
+    <div id="loadNote" style="font-size:13px;color:var(--muted)">Завантаження списків…</div>
+    <label for="selGroup">Група</label><select id="selGroup"></select>
+    <label for="selName">ПІБ</label><select id="selName"></select>
+    <div style="font-size:12.5px;color:var(--muted);margin-top:8px">Варіант визначається автоматично за списком викладача.</div>
+    <div style="margin-top:14px"><button class="btn big" id="btnStart" disabled>Почати роботу</button></div>
+  </section>
+
+  <section id="lab" hidden>
+    <div class="grid">
+      <div>
+        <h2>Вимірювання спектрів пропускання на монохроматорі УМ-2</h2>
+        <p class="task">Завдання: зняти сигнал фотоприймача Uλ(0) для <b>пустого скельця</b>, а потім Uλ(d) для <b>кожного зразка</b> вашого варіанта у всіх 40 точках градуювання (Додаток А, α0 = 100…3100). Барабан треба виставляти на поділку з точністю ±2.</p>
+        <details>
+          <summary>Довідка</summary>
+          <p><b>Як працювати.</b> Торкніться касети на столі, щоб поставити її в тримач між вихідною щілиною монохроматора і фотоприймачем. Торкніться барабана, щоб наблизитися до нього. Тягніть рифлене колесо (або шкалу) вгору-вниз: повільно – точно, швидко – далеко. Біля індексу (червона лінія) читайте поділку. Межу вольтметра перемикайте кнопками ◀ (менша межа) і ▶ (більша межа), під ними підписано, на яку межу перемкнеться прилад: «OL» – межа замала, мало розрядів – межа завелика. Кнопка «Додати дані в таблицю» записує найближчу поділку, кратну 10, і показ вольтметра.</p>
+          <p><b>Методика.</b> Зразок – тонка плівка на предметному склі; касету ставлять у тримач між вихідною щілиною монохроматора і фотоприймачем. Сигнал фотоприймача пропорційний світловому потоку, але залежить і від спектра лампи, монохроматора, фотоприймача та скла. Тому спочатку знімають сигнал для пустого скельця Uλ(0), потім для скельця з плівкою Uλ(d), і беруть їх відношення – спектральні характеристики приладу скорочуються.</p>
+          <p>Оптична товщина зразка: <span class="f">α<sub>λ</sub>d = ln( U<sub>λ</sub>(0) / U<sub>λ</sub>(d) )</span>, де Uλ(0) – сигнал для пустого скельця, Uλ(d) – для скельця з плівкою товщиною d, αλ – показник поглинання. Енергія фотона: <span class="f">E(еВ) = 1240 / λ(нм)</span>. Дотична, проведена по краю власного поглинання на графіку αλd(E), відсікає на осі енергій оптичну ширину забороненої зони.</p>
+          <p><b>Приклад.</b> Uλ(0) = 24,5 мВ, Uλ(d) = 17,5 мВ при α0 = 2200 (λ = 0,650 мкм): αλd = ln(24,5/17,5) = 0,336; E = 1240/650 = 1,91 еВ.</p>
+          <p><b>Додаток А. Градуювання монохроматора</b></p>
+          <div id="calibTbl"></div>
+        </details>
+
+        <div class="scene" id="scene">
+          <svg id="ov" viewBox="0 145 1000 415" aria-label="Стенд УМ-2"></svg>
+          <svg id="zm" viewBox="0 0 640 420" aria-label="Барабан і вольтметр"></svg>
+        </div>
+        <div class="hint" id="hint">Торкніться касети на столі, щоб встановити її в тримач.</div>
+        <div id="dbg" class="dbg" hidden></div>
+      </div>
+
+      <aside class="panel">
+        <div class="card who" id="who"></div>
+        <div class="card">
+          <b style="font-size:14px">Касети вашого варіанта</b>
+          <ul class="clist" id="clist"></ul>
+        </div>
+        <div class="stickyadd"><button class="btn big" id="btnAdd" disabled>Додати дані в таблицю</button></div>
+        <div class="card">
+          <b style="font-size:14px">Таблиця вимірювань</b>
+          <div style="font-size:12px;color:var(--muted);margin:2px 0 6px">α0 – найближча до барабана поділка, кратна 10. Помаранчеві клітинки – барабан стояв далі ніж ±2 поділки від точки.</div>
+          <div class="tblwrap"><table class="res" id="res"></table></div>
+        </div>
+        <div class="card">
+          <button class="btn big" id="btnFinish" disabled>Завершити вимірювання</button>
+          <div class="row" style="margin-top:8px">
+            <button class="btn sec" id="btnDocx">Таблиця у Word</button>
+            <button class="btn sec" id="btnCsv">CSV</button>
+          </div>
+          <div style="margin-top:10px;text-align:center"><button class="link" id="btnReset">Почати вимірювання спочатку</button></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<script src="../../site.js"></script>
+<script src="config.js"></script>
+<script src="settings.js"></script>
+<script>
+(function () {
+"use strict";
+var CFG = window.CONFIG_FALLBACK, SET = window.SETTINGS || {};
+var URLP = new URLSearchParams(location.search);
+var DEBUG = URLP.get("debug") === "1";
+var KEY = "lab1_um2_state_v1";
+var A0 = CFG.calib.a0, LAM = CFG.calib.lam, HV = CFG.calib.hv;
+var RANGES = [1,3,10,30,100,300,1e3,3e3,1e4,3e4,1e5,3e5,1e6,3e6,1e7,3e7,1e8,3e8,1e9]; // мкВ
+var SVGNS = "http://www.w3.org/2000/svg";
+var MOB = false; function isMob() { return ($("scene") ? $("scene").clientWidth : innerWidth) < 600; }
+var $ = function (id) { return document.getElementById(id); };
+
+// ---------- стан ----------
+var ST = load() || { student: null, data: {}, cassette: null, pos: 1500, range: 13, t0: Date.now(), done: false };
+function save() { try { localStorage.setItem(KEY, JSON.stringify(ST)); } catch (e) {} }
+function load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } }
+
+// ---------- модель ----------
+function interp(arr, pos) {
+  if (pos <= A0[0]) return arr[0];
+  for (var i = 1; i < A0.length; i++) if (pos <= A0[i]) {
+    var f = (pos - A0[i - 1]) / (A0[i] - A0[i - 1]); return arr[i - 1] + f * (arr[i] - arr[i - 1]);
+  }
+  return arr[arr.length - 1];
+}
+function gauss() { var u = 1 - Math.random(), v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+function variant() { return ST.student ? VARS[ST.student.variant] : null; }
+function trueSignal(pos) { // мкВ без шуму
+  var v = variant(); if (!v || !ST.cassette) return 0;
+  var t = (Date.now() - ST.t0) / 1000;
+  var drift = 1 + CFG.drift.amp * Math.sin(2 * Math.PI * t / CFG.drift.period_s + (v.seed % 628) / 100);
+  var s = Math.max(interp(CFG.S, pos) - CFG.stray, 0.5);
+  var ad = interp(CFG.cassettes[ST.cassette].ad, pos);
+  return v.k_lamp * drift * s * Math.exp(-ad) + CFG.stray;
+}
+function noisy(u) { return u * (1 + CFG.noise.rel * gauss()) + CFG.noise.abs * gauss(); }
+
+// ---------- вольтметр ----------
+function unitOf(R) { return R < 1e3 ? ["мкВ", 1] : R < 1e6 ? ["мВ", 1e3] : R < 1e9 ? ["В", 1e6] : ["кВ", 1e9]; }
+function rangeLabel(i) { var R = RANGES[i], u = unitOf(R); return (R / u[1]) + " " + u[0]; }
+var READ = { text: "", unit: "", uV: null, ol: false, digits: 0 };
+function updateReading() {
+  if (!ST.cassette) { READ = { text: "- - - -", unit: "", uV: null, ol: false, digits: 0 }; return; }
+  var u = noisy(trueSignal(ST.pos)), R = RANGES[ST.range], un = unitOf(R), full = R / un[1];
+  var dec = Math.max(0, 3 - Math.floor(Math.log10(full)));
+  if (Math.abs(u) > R) { READ = { text: "OL", unit: un[0], uV: null, ol: true, digits: 0 }; return; }
+  var v = u / un[1], s = v.toFixed(dec);
+  var sig = s.replace("-", "").replace(".", "").replace(/^0+/, "").length;
+  READ = { text: s.replace(".", ","), unit: un[0], uV: parseFloat(s) * un[1], ol: false, digits: sig };
+}
+
+// ---------- варіанти / студенти ----------
+var GROUPS = {}, VARS = {}, BACKEND = !!SET.script_url;
+function setLists(groups, vars) {
+  GROUPS = {}; VARS = {};
+  Object.keys(groups).forEach(function (g) {
+    GROUPS[g] = groups[g].map(function (x) { return typeof x === "string" ? { name: x, variant: null } : x; });
+  });
+  vars.forEach(function (v) { VARS[v.variant] = v; });
+}
+function fillLogin() {
+  var g = $("selGroup"), n = $("selName");
+  g.innerHTML = '<option value="">— оберіть групу —</option>' + Object.keys(GROUPS).map(function (k) { return "<option>" + esc(k) + "</option>"; }).join("");
+  function names() {
+    var list = GROUPS[g.value] || [];
+    n.innerHTML = '<option value="">' + (g.value ? "— оберіть ПІБ —" : "спершу оберіть групу") + "</option>" + list.map(function (x, i) { return '<option value="' + i + '">' + esc(x.name) + "</option>"; }).join("");
+    check();
+  }
+  function check() { $("btnStart").disabled = !(g.value && n.value !== ""); }
+  g.onchange = names; n.onchange = check; names();
+  $("btnStart").onclick = function () {
+    var rec = GROUPS[g.value][+n.value];
+    if (!rec || !VARS[rec.variant]) { alert("Для цього студента не призначено варіант. Зверніться до викладача."); return; }
+    var s = { group: g.value, name: rec.name, variant: +rec.variant };
+    var same = ST.student && ST.student.name === s.name && ST.student.group === s.group && ST.student.variant === s.variant;
+    if (!same && ST.student && Object.keys(ST.data).length && !confirm("Попередні вимірювання на цьому пристрої буде видалено. Продовжити?")) return;
+    if (!same) ST = { student: s, data: {}, cassette: null, pos: 1500, range: 13, t0: Date.now(), done: false };
+    save(); pushStatus("start"); startLab();
+  };
+}
+function init() {
+  if (!BACKEND) {
+    $("demoNote").hidden = false; $("loadNote").hidden = true;
+    setLists(CFG.demo.groups, CFG.demo.variants); fillLogin(); resume(); return;
+  }
+  fetch(SET.script_url + "?action=init").then(function (r) { return r.json(); }).then(function (d) {
+    setLists(d.groups, d.variants); try { localStorage.setItem(KEY + "_lists", JSON.stringify(d)); } catch (e) {}
+    $("loadNote").hidden = true; fillLogin(); resume();
+  }).catch(function () {
+    var c = null; try { c = JSON.parse(localStorage.getItem(KEY + "_lists")); } catch (e) {}
+    if (c) { setLists(c.groups, c.variants); $("loadNote").textContent = "Немає зв'язку – використано збережені списки."; }
+    else { setLists(CFG.demo.groups, CFG.demo.variants); $("loadNote").textContent = "Немає зв'язку з таблицею – демо-списки."; }
+    fillLogin(); resume();
+  });
+}
+function resume() { if (ST.student && VARS[ST.student.variant]) startLab(); }
+
+// ---------- статус у таблицю (Apps Script) ----------
+var pushTimer = null;
+function pushStatus(reason) {
+  if (!BACKEND || !ST.student) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(function () {
+    var v = variant(), meas = {};
+    v.required.forEach(function (c) { meas[c] = countOk(c); });
+    var body = { action: "status", group: ST.student.group, name: ST.student.name, variant: ST.student.variant,
+      measured: meas, complete: isComplete(), last: lastTime(), reason: reason };
+    fetch(SET.script_url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) }).catch(function () {});
+  }, reason === "point" ? 4000 : 50);
+}
+function lastTime() { var t = 0; Object.keys(ST.data).forEach(function (c) { Object.keys(ST.data[c]).forEach(function (a) { t = Math.max(t, ST.data[c][a].t || 0); }); }); return t ? new Date(t).toISOString() : ""; }
+
+// ---------- облік точок ----------
+function countOk(c) {
+  var d = ST.data[c] || {}, n = 0;
+  A0.forEach(function (a) { var e = d[a]; if (e && Math.abs(e.pos - a) <= CFG.tol) n++; });
+  return n;
+}
+function isComplete() { var v = variant(); return !!v && v.required.every(function (c) { return countOk(c) === A0.length; }); }
+function cName(c) { return CFG.cassettes[c].name; }
+
+// ---------- сцена: загальний вигляд ----------
+function el(tag, attrs, parent, text) {
+  var e = document.createElementNS(SVGNS, tag);
+  for (var k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  if (parent) parent.appendChild(e); return e;
+}
+var OV = {};
+function buildOverview() {
+  var s = $("ov"); s.innerHTML = ""; s.setAttribute("viewBox", MOB ? "0 145 1000 665" : "0 145 1000 415");
+  var defs = el("defs", {}, s);
+  defs.innerHTML =
+    '<linearGradient id="gMetal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d7dce1"/><stop offset=".5" stop-color="#b9c0c7"/><stop offset="1" stop-color="#8f979f"/></linearGradient>' +
+    '<linearGradient id="gTube" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3e7eb"/><stop offset=".45" stop-color="#c3c9cf"/><stop offset="1" stop-color="#7f878f"/></linearGradient>' +
+    '<linearGradient id="gDrum" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f6f8"/><stop offset=".4" stop-color="#cdd3d9"/><stop offset="1" stop-color="#858d95"/></linearGradient>' +
+    '<linearGradient id="gBench" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b98c5c"/><stop offset="1" stop-color="#8d6640"/></linearGradient>' +
+    '<radialGradient id="gGlow"><stop offset="0" stop-color="#fff7c2"/><stop offset=".5" stop-color="#ffd76a" stop-opacity=".8"/><stop offset="1" stop-color="#ffb300" stop-opacity="0"/></radialGradient>';
+  // стіл і рейка
+  el("rect", { x: 0, y: 440, width: 1000, height: MOB ? 380 : 120, fill: "url(#gBench)" }, s);
+  el("rect", { x: 0, y: 440, width: 1000, height: 6, fill: "#7a5636" }, s);
+  el("rect", { x: 330, y: 392, width: 650, height: 26, rx: 3, fill: "url(#gMetal)", stroke: "#6b737b" }, s);
+  el("rect", { x: 330, y: 418, width: 650, height: 22, fill: "#7d858d" }, s);
+  // освітлювач
+  el("rect", { x: 897, y: 300, width: 16, height: 92, fill: "url(#gMetal)", stroke: "#6b737b" }, s);
+  el("rect", { x: 858, y: 236, width: 112, height: 72, rx: 6, fill: "url(#gMetal)", stroke: "#5f676f" }, s);
+  for (var i = 0; i < 6; i++) el("rect", { x: 880 + i * 13, y: 246, width: 6, height: 26, rx: 2, fill: "#6f777f" }, s);
+  el("text", { x: 914, y: 296, "text-anchor": "middle", "font-size": 13, fill: "#2a2f35" }, s, "Освітлювач");
+  el("circle", { cx: 858, cy: 272, r: 30, fill: "url(#gGlow)" }, s);
+  // промінь лампа -> вхідна щілина
+  el("rect", { x: 790, y: 266, width: 68, height: 12, fill: "#ffe48a", opacity: .55 }, s);
+  // монохроматор: вхідна труба, корпус, вихідна труба
+  el("rect", { x: 560, y: 246, width: 230, height: 54, rx: 8, fill: "url(#gTube)", stroke: "#5f676f" }, s);
+  el("rect", { x: 330, y: 196, width: 240, height: 136, rx: 8, fill: "url(#gMetal)", stroke: "#5f676f" }, s);
+  el("rect", { x: 372, y: 164, width: 150, height: 38, rx: 6, fill: "url(#gMetal)", stroke: "#5f676f" }, s);
+  el("rect", { x: 420, y: 212, width: 62, height: 26, fill: "#2b2f33" }, s);
+  el("text", { x: 451, y: 230, "text-anchor": "middle", "font-size": 13, fill: "#e8e8e8", "font-weight": "bold" }, s, "УМ-2");
+  el("rect", { x: 250, y: 240, width: 86, height: 58, rx: 8, fill: "url(#gTube)", stroke: "#5f676f" }, s);
+  OV.beam = el("rect", { x: 182, y: 263, width: 68, height: 12, fill: "#ff0000", opacity: 0 }, s);
+  // тримач касети: між вихідною щілиною і фотоприймачем
+  el("rect", { x: 200, y: 218, width: 34, height: 102, rx: 3, fill: "none", stroke: "#4f575f", "stroke-width": 5 }, s);
+  el("rect", { x: 232, y: 300, width: 22, height: 10, fill: "#6b737b" }, s);
+  OV.slot = el("g", {}, s);
+  el("text", { x: 217, y: 210, "text-anchor": "middle", "font-size": MOB ? 22 : 13, fill: "#2a2f35" }, s, "Тримач");
+  // фотоприймач
+  el("rect", { x: 112, y: 168, width: 70, height: 172, rx: 10, fill: "url(#gTube)", stroke: "#4f575f" }, s);
+  el("rect", { x: 112, y: 168, width: 70, height: 16, rx: 6, fill: "#5f676f" }, s);
+  el("text", { x: 147, y: 160, "text-anchor": "middle", "font-size": 13, fill: "#2a2f35" }, s, "Фотоприймач");
+  // постамент
+  el("path", { d: "M395 332 L505 332 L530 392 L370 392 Z", fill: "url(#gMetal)", stroke: "#5f676f" }, s);
+  // барабан
+  var drum = el("g", { class: "clk", id: "ovDrum" }, s);
+  el("rect", { x: 352, y: 300, width: 128, height: 66, rx: 6, fill: "url(#gDrum)", stroke: "#5f676f" }, drum);
+  for (i = 0; i < 15; i++) el("line", { x1: 360 + i * 8, y1: 304, x2: 366 + i * 8, y2: 362, stroke: "#7b838b", "stroke-width": 1.3 }, drum);
+  el("rect", { x: 474, y: 296, width: 18, height: 74, rx: 4, fill: "#8a9299", stroke: "#5f676f" }, drum);
+  for (i = 0; i < 9; i++) el("line", { x1: 476, y1: 300 + i * 8, x2: 490, y2: 300 + i * 8, stroke: "#5f676f" }, drum);
+  el("rect", MOB ? { x: 330, y: 282, width: 420, height: 160, fill: "transparent" } : { x: 330, y: 282, width: 182, height: 102, fill: "transparent" }, drum);
+  el("text", { x: MOB ? 545 : 416, y: MOB ? 432 : 384, "text-anchor": "middle", "font-size": MOB ? 26 : 13, fill: "#1f5fa8", "font-weight": "bold" }, drum, "Барабан ▸ торкніться");
+  drum.addEventListener("click", function () { zoom(true); });
+  // кабель
+  el("path", { d: "M147 340 C147 380, 200 380, 230 392", fill: "none", stroke: "#222", "stroke-width": 4 }, s);
+  // вольтметр
+  var vm = el("g", {}, s);
+  el("rect", { x: 22, y: 380, width: 300, height: 150, rx: 10, fill: "#3b4148", stroke: "#22272c" }, vm);
+  el("text", { x: 36, y: 400, "font-size": 12, fill: "#c9d1d9" }, vm, "Вольтметр цифровий");
+  el("rect", { x: 36, y: 408, width: 272, height: 62, rx: 5, fill: "#0e1a12" }, vm);
+  OV.disp = el("text", { x: 252, y: 452, "text-anchor": "end", "font-size": 38, fill: "#7dff9a", "font-family": "Courier New, monospace", "font-weight": "bold" }, vm, "");
+  OV.unit = el("text", { x: 298, y: 452, "text-anchor": "end", "font-size": 15, fill: "#7dff9a" }, vm, "");
+  var bL = el("g", { class: "clk" }, vm), bR = el("g", { class: "clk" }, vm);
+  el("rect", { x: 36, y: 476, width: 64, height: 48, rx: 6, fill: "#d6dbe0" }, bL); el("text", { x: 68, y: 498, "text-anchor": "middle", "font-size": 18 }, bL, "◀");
+  el("rect", { x: 244, y: 476, width: 64, height: 48, rx: 6, fill: "#d6dbe0" }, bR); el("text", { x: 276, y: 498, "text-anchor": "middle", "font-size": 18 }, bR, "▶");
+  OV.rL = el("text", { x: 68, y: 517, "text-anchor": "middle", "font-size": 11 }, bL, ""); OV.rR = el("text", { x: 276, y: 517, "text-anchor": "middle", "font-size": 11 }, bR, "");
+  OV.rng = el("text", { x: 172, y: 497, "text-anchor": "middle", "font-size": 16, fill: "#fff" }, vm, "");
+  el("text", { x: 172, y: 515, "text-anchor": "middle", "font-size": 11, fill: "#aab3bb" }, vm, "межа вимірювання");
+  bL.addEventListener("click", function () { setRange(-1); }); bR.addEventListener("click", function () { setRange(1); });
+  // полиця з касетами
+  OV.shelf = el("g", {}, s);
+  el("text", { x: MOB ? 500 : 660, y: MOB ? 560 : 470, "text-anchor": "middle", "font-size": MOB ? 28 : 13, fill: "#fff" }, s, "Касети – торкніться, щоб встановити");
+}
+function drawShelf() {
+  var g = OV.shelf; g.innerHTML = ""; var v = variant(); if (!v) return;
+  var list = v.required, w = 118, h = 70, gap = 14, x0 = 660 - (list.length * w + (list.length - 1) * gap) / 2, fs = 12.5, k = 1;
+  if (MOB) { w = 440; h = 100; k = 100 / 70; fs = 30; }
+  list.forEach(function (c, i) {
+    var x = MOB ? 50 + (i % 2) * 460 : x0 + i * (w + gap), y = MOB ? 585 + Math.floor(i / 2) * 115 : 478, cg = el("g", { class: "clk" }, g);
+    if (c === ST.cassette) {
+      el("rect", { x: x, y: y, width: w, height: h, rx: 6, fill: "none", stroke: "#fff", "stroke-dasharray": "6 5", opacity: .7 }, cg);
+      el("text", { x: x + w / 2, y: y + h * 0.6, "text-anchor": "middle", "font-size": fs, fill: "#fff" }, cg, shortName(c) + " – у тримачі");
+    } else if (MOB) {
+      el("rect", { x: x, y: y, width: w, height: h, rx: 8, fill: "#2f353b", stroke: "#1b1f23" }, cg);
+      el("rect", { x: x + 12, y: y + 14, width: 110, height: h - 28, rx: 3, fill: "#e8f3f7", stroke: "#9fb4bd" }, cg);
+      if (c !== "GLASS") el("rect", { x: x + 34, y: y + 22, width: 66, height: h - 44, rx: 10, fill: CFG.cassettes[c].color, opacity: .85 }, cg);
+      el("text", { x: x + 140, y: y + h / 2 + 11, "font-size": fs, fill: "#fff" }, cg, shortName(c));
+    } else {
+      el("rect", { x: x, y: y, width: w, height: h, rx: 6, fill: "#2f353b", stroke: "#1b1f23" }, cg);
+      el("rect", { x: x + 10, y: y + 8, width: w - 20, height: 30, rx: 2, fill: "#e8f3f7", stroke: "#9fb4bd" }, cg);
+      if (c !== "GLASS") el("rect", { x: x + 30, y: y + 12, width: w - 60, height: 22, rx: 8, fill: CFG.cassettes[c].color, opacity: .85 }, cg);
+      el("text", { x: x + w / 2, y: y + 56, "text-anchor": "middle", "font-size": fs, fill: "#fff" }, cg, shortName(c));
+    }
+    el("rect", { x: x, y: y, width: w, height: h, fill: "transparent" }, cg);
+    cg.addEventListener("click", function () { insert(c); });
+  });
+}
+function shortName(c) { return c === "GLASS" ? "Пусте скельце" : c === "PcCu" ? "PcCu" : c === "PbPc" ? "PbPc" : "Меланін №" + c.slice(1); }
+function drawSlot() {
+  var g = OV.slot; g.innerHTML = "";
+  if (!ST.cassette) return;
+  el("rect", { x: 209, y: 226, width: 16, height: 86, rx: 2, fill: "#e8f3f7", stroke: "#8aa3ad" }, g);
+  if (ST.cassette !== "GLASS") el("rect", { x: 211, y: 247, width: 12, height: 44, rx: 3, fill: CFG.cassettes[ST.cassette].color, opacity: .85 }, g);
+}
+function insert(c) {
+  if (c === ST.cassette) return;
+  ST.cassette = c; save(); drawShelf(); drawSlot(); renderPanel();
+  hint("У тримачі: " + cName(c) + ". Торкніться барабана, щоб наблизитися.");
+}
+
+// ---------- сцена: барабан і вольтметр (наближення) ----------
+// Барабан УМ-2: горизонтальна вісь, спіральна шкала (DIV_TURN поділок на виток, крок витка PITCH),
+// покажчик на штанзі під барабаном рухається вздовж осі разом із витком.
+var ZM = {}, CY = 215, RR = 170, DL = 24, DR = 314, ZH = 420, DIV_TURN = 350, PITCH = 27, SCALE_MAX = 3500, RAD_PER_DIV = 2 * Math.PI / DIV_TURN;
+function buildZoom() {
+  var s = $("zm"); s.innerHTML = "";
+  if (MOB) { CY = 300; RR = 92; DL = 8; DR = 292; ZH = 470; s.setAttribute("viewBox", "0 0 340 470"); }
+  else { CY = 140; RR = 108; DL = 20; DR = 560; ZH = 452; s.setAttribute("viewBox", "0 0 640 452"); }
+  var defs = el("defs", {}, s);
+  defs.innerHTML =
+    '<linearGradient id="gCyl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f464d"/><stop offset=".1" stop-color="#8a9299"/><stop offset=".3" stop-color="#d9dee3"/><stop offset=".48" stop-color="#ffffff"/><stop offset=".7" stop-color="#cfd5da"/><stop offset=".9" stop-color="#7a828a"/><stop offset="1" stop-color="#363c42"/></linearGradient>' +
+    '<linearGradient id="gCoin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f575f"/><stop offset=".3" stop-color="#b8bfc6"/><stop offset=".5" stop-color="#dfe3e7"/><stop offset=".7" stop-color="#aab1b8"/><stop offset="1" stop-color="#454c53"/></linearGradient>' +
+    '<linearGradient id="gHouse" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c7ccd1"/><stop offset="1" stop-color="#9aa1a8"/></linearGradient>' +
+    '<clipPath id="cpDrum"><rect x="' + DL + '" y="' + (CY - RR) + '" width="' + (DR - DL) + '" height="' + (2 * RR) + '"/></clipPath>' +
+    '<clipPath id="cpCoin"><rect x="' + (DR + 4) + '" y="' + (CY - RR - 8) + '" width="32" height="' + (2 * RR + 16) + '" rx="6"/></clipPath>' +
+    '<clipPath id="cpLens"><circle id="lensC" cx="0" cy="' + CY + '" r="' + (MOB ? 44 : 46) + '"/></clipPath>';
+  el("rect", { x: DL - 8, y: CY - RR - 10, width: DR - DL + 52, height: 2 * RR + 20, rx: 8, fill: "url(#gHouse)" }, s);
+  var drum = el("g", { class: "drag", id: "zDrum" }, s);
+  var face = el("g", { id: "drumFace" }, drum);
+  ZM.body = el("g", { "clip-path": "url(#cpDrum)" }, face);
+  ZM.ticks = el("g", { "clip-path": "url(#cpDrum)" }, face);
+  ZM.ptrTip = el("g", {}, face);
+  el("rect", { x: DL, y: CY - RR, width: DR - DL, height: 2 * RR, fill: "transparent" }, drum);
+  var coin = el("g", { class: "drag", id: "zCoin" }, s);
+  el("rect", { x: DR + 4, y: CY - RR - 8, width: 32, height: 2 * RR + 16, rx: 6, fill: "url(#gCoin)", stroke: "#3b4148" }, coin);
+  ZM.knurl = el("g", { "clip-path": "url(#cpCoin)" }, coin);
+  var ry = CY + RR + 16; ZM.ry = ry;
+  el("rect", { x: DL - 8, y: ry - 4, width: DR - DL + 52, height: 8, rx: 4, fill: "#8d959c", stroke: "#5f676f" }, s);
+  ZM.ptr = el("g", {}, s);
+  // лупа на покажчику
+  ZM.lens = el("g", { "pointer-events": "none" }, s);
+  el("text", { x: DL, y: CY - RR - 18, "font-size": 14, fill: "#2a2f35", "font-weight": "bold" }, s, "Барабан монохроматора");
+  var bL, bR, back;
+  if (!MOB) {
+    ZM.cas = el("text", { x: 620, y: CY - RR - 18, "text-anchor": "end", "font-size": 13, fill: "#2a2f35" }, s, "");
+    el("rect", { x: 20, y: 282, width: 600, height: 166, rx: 12, fill: "#3b4148", stroke: "#22272c" }, s);
+    el("rect", { x: 32, y: 294, width: 262, height: 74, rx: 6, fill: "#0e1a12" }, s);
+    el("text", { x: 40, y: 290, "font-size": 0 }, s, "");
+    ZM.disp = el("text", { x: 238, y: 347, "text-anchor": "end", "font-size": 44, fill: "#7dff9a", "font-family": "Courier New, monospace", "font-weight": "bold" }, s, "");
+    ZM.unit = el("text", { x: 288, y: 347, "text-anchor": "end", "font-size": 17, fill: "#7dff9a" }, s, "");
+    el("text", { x: 445, y: 302, "text-anchor": "middle", "font-size": 12, fill: "#aab3bb" }, s, "межа вимірювання");
+    bL = el("g", { class: "clk" }, s); bR = el("g", { class: "clk" }, s);
+    el("rect", { x: 306, y: 310, width: 70, height: 50, rx: 8, fill: "#d6dbe0" }, bL); el("text", { x: 341, y: 344, "text-anchor": "middle", "font-size": 24 }, bL, "◀");
+    el("rect", { x: 514, y: 310, width: 70, height: 50, rx: 8, fill: "#d6dbe0" }, bR); el("text", { x: 549, y: 344, "text-anchor": "middle", "font-size": 24 }, bR, "▶");
+    ZM.rng = el("text", { x: 445, y: 342, "text-anchor": "middle", "font-size": 19, fill: "#fff", "font-weight": "bold" }, s, "");
+    ZM.rL = el("text", { x: 341, y: 376, "text-anchor": "middle", "font-size": 12.5, fill: "#e6eaee" }, s, "");
+    ZM.rR = el("text", { x: 549, y: 376, "text-anchor": "middle", "font-size": 12.5, fill: "#e6eaee" }, s, "");
+    addBtn(s, 32, 390, 400, 48, 18);
+    back = el("g", { class: "clk" }, s);
+    el("rect", { x: 444, y: 390, width: 164, height: 48, rx: 9, fill: "#5b636e" }, back);
+    el("text", { x: 526, y: 419, "text-anchor": "middle", "font-size": 14, fill: "#fff" }, back, "⤺ Загальний вигляд");
+  } else {
+    el("rect", { x: 6, y: 6, width: 328, height: 112, rx: 10, fill: "#3b4148", stroke: "#22272c" }, s);
+    el("rect", { x: 14, y: 14, width: 200, height: 62, rx: 5, fill: "#0e1a12" }, s);
+    ZM.disp = el("text", { x: 178, y: 58, "text-anchor": "end", "font-size": 34, fill: "#7dff9a", "font-family": "Courier New, monospace", "font-weight": "bold" }, s, "");
+    ZM.unit = el("text", { x: 208, y: 58, "text-anchor": "end", "font-size": 14, fill: "#7dff9a" }, s, "");
+    el("text", { x: 16, y: 104, "font-size": 11, fill: "#aab3bb" }, s, "Вольтметр · межа:");
+    ZM.rng = el("text", { x: 122, y: 105, "font-size": 15, fill: "#fff", "font-weight": "bold" }, s, "");
+    bL = el("g", { class: "clk" }, s); bR = el("g", { class: "clk" }, s);
+    el("rect", { x: 222, y: 14, width: 52, height: 96, rx: 8, fill: "#d6dbe0" }, bL); el("text", { x: 248, y: 62, "text-anchor": "middle", "font-size": 24 }, bL, "◀");
+    el("rect", { x: 278, y: 14, width: 50, height: 96, rx: 8, fill: "#d6dbe0" }, bR); el("text", { x: 303, y: 62, "text-anchor": "middle", "font-size": 24 }, bR, "▶");
+    ZM.rL = el("text", { x: 248, y: 100, "text-anchor": "middle", "font-size": 10.5 }, bL, ""); ZM.rR = el("text", { x: 303, y: 100, "text-anchor": "middle", "font-size": 10.5 }, bR, "");
+    addBtn(s, 6, 126, 328, 48, 18);
+    ZM.cas = el("text", { x: 10, y: 452, "font-size": 12, fill: "#2a2f35" }, s, "");
+    back = el("g", { class: "clk" }, s);
+    el("rect", { x: 228, y: 434, width: 106, height: 28, rx: 8, fill: "#5b636e" }, back);
+    el("text", { x: 281, y: 453, "text-anchor": "middle", "font-size": 12.5, fill: "#fff" }, back, "⤺ Весь стенд");
+  }
+  bL.addEventListener("click", function () { setRange(-1); }); bR.addEventListener("click", function () { setRange(1); });
+  back.addEventListener("click", function () { zoom(false); });
+  bindDrag(drum); bindDrag(coin);
+  s.onwheel = function (e) {
+    if (!$("scene").classList.contains("zoomed")) return;
+    e.preventDefault(); move(e.deltaY * (e.shiftKey ? 0.1 : 0.02));
+  };
+}
+function addBtn(s, x, y, w, h, fs) {
+  var g = el("g", { class: "clk", id: "zAdd" }, s);
+  el("rect", { x: x, y: y, width: w, height: h, rx: 9, fill: "#1f5fa8" }, g);
+  el("text", { x: x + w / 2, y: y + h / 2 + fs * 0.36, "text-anchor": "middle", "font-size": fs, "font-weight": "bold", fill: "#fff" }, g, "Додати дані в таблицю");
+  g.addEventListener("click", addPoint); ZM.add = g;
+}
+function drawDrum() {
+  if (!ZM.ticks) return;
+  var p = ST.pos, f = function (v) { return v.toFixed(1); };
+  PITCH = (DR - DL - 22) / (SCALE_MAX / DIV_TURN);
+  var X0 = DL + 14, xOf = function (d) { return X0 + PITCH * d / DIV_TURN; };
+  // корпус барабана: горизонтальна вісь, освітлення зверху
+  ZM.body.innerHTML = '<rect x="' + DL + '" y="' + (CY - RR) + '" width="' + (DR - DL) + '" height="' + (2 * RR) + '" fill="url(#gCyl)"/>' +
+    '<rect x="' + DL + '" y="' + (CY - RR) + '" width="6" height="' + (2 * RR) + '" fill="#7b838b"/>';
+  // кут повороту: поділка p – спереду (θ = 0)
+  var t = "", path = "", prev = false, phi = p * RAD_PER_DIV;
+  for (var d = 0; d <= SCALE_MAX; d += 2) {
+    var th = (d * RAD_PER_DIV - phi) % (2 * Math.PI); if (th > Math.PI) th -= 2 * Math.PI; if (th < -Math.PI) th += 2 * Math.PI;
+    if (Math.abs(th) > 1.52) { prev = false; continue; }
+    var x = xOf(d), y = CY - RR * Math.sin(th), c = Math.cos(th);
+    path += (prev ? " L" : " M") + f(x) + " " + f(y); prev = true;
+    var len = d % 50 === 0 ? 9 : d % 10 === 0 ? 6.5 : 4, op = Math.max(0, Math.min(1, 1.25 * c)).toFixed(2);
+    t += '<line x1="' + f(x) + '" y1="' + f(y) + '" x2="' + f(x + len) + '" y2="' + f(y) + '" stroke="#15191d" stroke-width="' + (0.35 + 0.75 * c).toFixed(2) + '" opacity="' + op + '"/>';
+    if (d % 50 === 0 && c > 0.45) {
+      var fs = (9 * (0.35 + 0.65 * c)).toFixed(1), tx = f(x - 3);
+      t += '<text x="' + tx + '" y="' + f(y) + '" transform="rotate(-90 ' + tx + " " + f(y) + ')" text-anchor="middle" font-size="' + fs + '" font-weight="bold" fill="#15191d" opacity="' + op + '">' + d + "</text>";
+    }
+  }
+  // тінь до верхнього й нижнього країв (шкала йде назад)
+  ZM.ticks.innerHTML = '<path d="' + path + '" fill="none" stroke="#15191d" stroke-width="0.8" opacity=".75"/>' + t;
+  // покажчик на штанзі
+  var xp = xOf(p), ry = ZM.ry;
+  ZM.ptr.innerHTML = '<rect x="' + f(xp - 9) + '" y="' + (ry - 9) + '" width="22" height="18" rx="3" fill="#b4bbc1" stroke="#5f676f"/>';
+  ZM.ptrTip.innerHTML = '<rect x="' + f(xp + 6) + '" y="' + (CY + 3) + '" width="3.4" height="' + (ry - 9 - CY - 3) + '" fill="#e3e6e9" stroke="#7b838b" stroke-width=".5"/>' +
+    '<path d="M' + f(xp + 4.6) + " " + (CY + 4.5) + " L" + f(xp + 7.7) + " " + CY + " L" + f(xp + 10.8) + " " + (CY + 4.5) + ' Z" fill="#fff" stroke="#5f676f" stroke-width=".5"/>' +
+    '<line x1="' + f(xp - 1) + '" y1="' + CY + '" x2="' + f(xp + 10) + '" y2="' + CY + '" stroke="#d0021b" stroke-width="1.1"/>';
+  var LR = MOB ? 44 : 46, LZ = MOB ? 2.4 : 2.2, lx = Math.max(DL + LR, Math.min(DR - LR, xp + 4));
+  document.getElementById("lensC").setAttribute("cx", lx);
+  ZM.lens.innerHTML = '<g clip-path="url(#cpLens)"><rect x="' + (lx - LR) + '" y="' + (CY - LR) + '" width="' + (2 * LR) + '" height="' + (2 * LR) + '" fill="#fff"/>' +
+    '<use href="#drumFace" transform="translate(' + f(xp + 4) + " " + CY + ") scale(" + LZ + ") translate(" + f(-(xp + 4)) + " " + (-CY) + ')"/></g>' +
+    '<circle cx="' + f(lx) + '" cy="' + CY + '" r="' + LR + '" fill="none" stroke="#2b3137" stroke-width="3"/>' +
+    '<circle cx="' + f(lx) + '" cy="' + CY + '" r="' + (LR - 2) + '" fill="none" stroke="#fff" stroke-width="1" opacity=".6"/>';
+  var k = "", step = 6 * Math.PI / 180, ph = ((-p * RAD_PER_DIV) % step + step) % step;
+  for (var a = -1.56 + ph; a < 1.56; a += step) {
+    var yy = CY - (RR + 8) * Math.sin(a), cc = Math.cos(a);
+    k += '<line x1="' + (DR + 5) + '" y1="' + f(yy) + '" x2="' + (DR + 37) + '" y2="' + f(yy) + '" stroke="#2b3137" stroke-width="' + (2.2 * cc + 0.3).toFixed(2) + '" opacity="' + (0.25 + 0.7 * cc).toFixed(2) + '"/>';
+  }
+  ZM.knurl.innerHTML = k;
+}
+var drag = null, vel = 0, raf = null;
+function bindDrag(g) {
+  g.addEventListener("pointerdown", function (e) {
+    g.setPointerCapture(e.pointerId); stopInertia();
+    drag = { y: e.clientY, t: performance.now(), scale: $("zm").getBoundingClientRect().height / ZH };
+    vel = 0;
+  });
+  g.addEventListener("pointermove", function (e) {
+    if (!drag) return;
+    var now = performance.now(), dy = (e.clientY - drag.y) / drag.scale, dt = Math.max(1, now - drag.t);
+    var v = dy / dt; vel = 0.7 * vel + 0.3 * v;
+    move(dy / RR / RAD_PER_DIV * accel(v));
+    drag.y = e.clientY; drag.t = now;
+  });
+  function end() {
+    if (!drag) return; drag = null;
+    if (Math.abs(vel) > 0.25) inertia();
+  }
+  g.addEventListener("pointerup", end); g.addEventListener("pointercancel", end);
+}
+function accel(v) { return Math.min(30, 1 + Math.pow(Math.abs(v) / 0.7, 2)); }
+function inertia() {
+  var last = performance.now();
+  (function step() {
+    var now = performance.now(), dt = now - last; last = now;
+    vel *= Math.pow(0.94, dt / 16);
+    if (Math.abs(vel) < 0.03) { raf = null; save(); return; }
+    move((vel * dt) / RR / RAD_PER_DIV * accel(vel));
+    raf = requestAnimationFrame(step);
+  })();
+}
+function stopInertia() { if (raf) cancelAnimationFrame(raf); raf = null; }
+function move(dd) {
+  ST.pos = Math.max(CFG.posMin, Math.min(CFG.posMax, ST.pos + dd));
+  if (ST.pos === CFG.posMin || ST.pos === CFG.posMax) { vel = 0; hint("Барабан у крайньому положенні.", true); }
+  drawDrum(); updateBeam(); saveSoon();
+}
+var saveT = null; function saveSoon() { clearTimeout(saveT); saveT = setTimeout(save, 400); }
+function zoom(on) {
+  var sc = $("scene");
+  sc.classList.toggle("zoomed", on);
+  if (on) { drawDrum(); hint(ST.cassette ? "Тягніть колесо вгору-вниз і виставте поділку на червоний індекс." : "Касету не встановлено – поверніться до загального вигляду.", !ST.cassette); }
+}
+function setRange(d) { ST.range = Math.max(0, Math.min(RANGES.length - 1, ST.range + d)); save(); tick(); }
+
+// ---------- промінь на виході (колір довжини хвилі) ----------
+function lamColor(nm) {
+  var r = 0, g = 0, b = 0;
+  if (nm < 440) { r = (440 - nm) / 60; b = 1; } else if (nm < 490) { g = (nm - 440) / 50; b = 1; }
+  else if (nm < 510) { g = 1; b = (510 - nm) / 20; } else if (nm < 580) { r = (nm - 510) / 70; g = 1; }
+  else if (nm < 645) { r = 1; g = (645 - nm) / 65; } else if (nm <= 780) { r = 1; } else return null;
+  return "rgb(" + Math.round(255 * r) + "," + Math.round(255 * g) + "," + Math.round(255 * b) + ")";
+}
+function updateBeam() {
+  var nm = interp(LAM, ST.pos) * 1000, c = lamColor(nm);
+  if (!c) { OV.beam.setAttribute("opacity", 0); return; }
+  OV.beam.setAttribute("fill", c); OV.beam.setAttribute("opacity", .75);
+}
+
+// ---------- запис ----------
+function addPoint() {
+  if (!ST.cassette) { hint("Спершу встановіть касету.", true); return; }
+  if (READ.ol) { hint("OL – перевантаження. Збільшіть межу вольтметра (▶).", true); return; }
+  if (READ.uV == null) return;
+  var a = Math.round(ST.pos / 10) * 10;
+  ST.data[ST.cassette] = ST.data[ST.cassette] || {};
+  var had = !!ST.data[ST.cassette][a];
+  ST.data[ST.cassette][a] = { u: READ.uV, txt: READ.text + " " + READ.unit, pos: Math.round(ST.pos * 10) / 10, t: Date.now() };
+  save(); renderPanel(); pushStatus("point");
+  var msg = (had ? "Замінено: " : "Записано: ") + shortName(ST.cassette) + ", α0 = " + a + " → " + READ.text + " " + READ.unit + ".";
+  if (READ.digits < 3) msg += " Мало значущих цифр – зменшіть межу (◀).";
+  if (A0.indexOf(a) < 0 || Math.abs(ST.pos - a) > CFG.tol) msg += " Увага: це не точка Додатка А (±" + CFG.tol + ").";
+  hint(msg, READ.digits < 3 || A0.indexOf(a) < 0 || Math.abs(ST.pos - a) > CFG.tol);
+  if (isComplete() && !ST.done) hint("Усі точки для всіх касет виміряно. Натисніть «Завершити вимірювання».");
+}
+function delPoint(c, a) { if (ST.data[c]) { delete ST.data[c][a]; save(); renderPanel(); pushStatus("point"); } }
+
+// ---------- панель ----------
+function renderPanel() {
+  var v = variant(), s = ST.student;
+  $("who").innerHTML = "<b>" + esc(s.name) + "</b><br>" + esc(s.group) + " · Варіант " + s.variant +
+    ' · <button class="link" id="btnChange">змінити</button>' + (BACKEND ? "" : '<br><span style="color:#a37800">Демо-режим</span>');
+  $("btnChange").onclick = function () { $("lab").hidden = true; $("login").hidden = false; document.body.classList.remove("inlab"); };
+  $("clist").innerHTML = v.required.map(function (c) {
+    var n = countOk(c), ok = n === A0.length;
+    return '<li class="' + (c === ST.cassette ? "cur" : "") + '"><span>' + esc(cName(c)) + (c === ST.cassette ? " ◂" : "") + '</span><span class="' + (ok ? "ok" : "") + '">' + n + "/" + A0.length + (ok ? " ✓" : "") + "</span></li>";
+  }).join("");
+  $("btnAdd").disabled = !ST.cassette;
+  if (ZM.add) ZM.add.setAttribute("opacity", ST.cassette ? 1 : 0.4);
+  $("btnFinish").disabled = !isComplete();
+  $("btnFinish").textContent = ST.done ? "Вимірювання завершено ✓" : "Завершити вимірювання";
+  // таблиця
+  var cols = v.required.slice(); Object.keys(ST.data).forEach(function (c) { if (cols.indexOf(c) < 0) cols.push(c); });
+  var rows = A0.slice(); cols.forEach(function (c) { Object.keys(ST.data[c] || {}).forEach(function (a) { a = +a; if (rows.indexOf(a) < 0) rows.push(a); }); });
+  rows.sort(function (a, b) { return a - b; });
+  var h = "<tr><th>α0</th>" + cols.map(function (c) { return "<th>" + esc(shortName(c)) + "</th>"; }).join("") + "</tr>";
+  rows.forEach(function (a) {
+    var std = A0.indexOf(a) >= 0;
+    h += '<tr class="' + (std ? "" : "extra") + '"><td>' + a + "</td>";
+    cols.forEach(function (c) {
+      var e = (ST.data[c] || {})[a], cls = c === ST.cassette ? "cc" : "";
+      if (!e) { h += '<td class="' + cls + '">–</td>'; return; }
+      if (!std || Math.abs(e.pos - a) > CFG.tol) cls += " bad";
+      h += '<td class="' + cls + '">' + esc(e.txt) + (c === ST.cassette ? ' <button class="del" data-c="' + c + '" data-a="' + a + '" title="Видалити">×</button>' : "") + "</td>";
+    });
+    h += "</tr>";
+  });
+  $("res").innerHTML = h;
+  Array.prototype.forEach.call($("res").querySelectorAll(".del"), function (b) { b.onclick = function () { delPoint(b.dataset.c, +b.dataset.a); }; });
+  ZM.cas && (ZM.cas.textContent = ST.cassette ? "У тримачі: " + cName(ST.cassette) : "Касету не встановлено");
+}
+
+// ---------- експорт ----------
+function exportRows() {
+  var v = variant(), cols = v.required.slice(); Object.keys(ST.data).forEach(function (c) { if (cols.indexOf(c) < 0) cols.push(c); });
+  var rows = A0.slice(); cols.forEach(function (c) { Object.keys(ST.data[c] || {}).forEach(function (a) { a = +a; if (rows.indexOf(a) < 0) rows.push(a); }); });
+  rows.sort(function (a, b) { return a - b; });
+  var head = ["α0"].concat(cols.map(function (c) { return "Uλ – " + cName(c) + ", мкВ"; }));
+  var body = rows.map(function (a) { return [String(a)].concat(cols.map(function (c) { var e = (ST.data[c] || {})[a]; return e ? fmtNum(e.u) : ""; })); });
+  return { head: head, body: body };
+}
+function fmtNum(u) { var s = (Math.abs(u) >= 100 ? u.toPrecision(5) : u.toPrecision(4)); return String(parseFloat(s)).replace(".", ","); }
+function fileBase() { var s = ST.student; return ("ЛР1_" + s.group + "_" + s.name + "_вар" + s.variant).replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_"); }
+function download(blob, name) {
+  var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function exportCsv() {
+  var t = exportRows(), lines = [t.head].concat(t.body).map(function (r) { return r.map(function (x) { return '"' + String(x).replace(/"/g, '""') + '"'; }).join(";"); });
+  var s = ST.student;
+  lines.unshift('"ЛР1. ' + CFG.title + '";"' + s.group + '";"' + s.name + '";"Варіант ' + s.variant + '";"' + new Date().toLocaleString("uk-UA") + '"');
+  download(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }), fileBase() + ".csv");
+}
+// мінімальний DOCX (zip без стиснення)
+var CRC = (function () { var t = []; for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b) { var c = 0xFFFFFFFF; for (var i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zip(files) {
+  var enc = new TextEncoder(), parts = [], cd = [], off = 0;
+  function u16(n) { return [n & 255, (n >>> 8) & 255]; } function u32(n) { return [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255]; }
+  files.forEach(function (f) {
+    var name = enc.encode(f[0]), data = enc.encode(f[1]), crc = crc32(data);
+    var lh = [].concat(u32(0x04034b50), u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0));
+    parts.push(new Uint8Array(lh), name, data);
+    cd.push(new Uint8Array([].concat(u32(0x02014b50), u16(20), u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(off))), name);
+    off += lh.length + name.length + data.length;
+  });
+  var cdSize = cd.reduce(function (s, x) { return s + x.length; }, 0);
+  var end = new Uint8Array([].concat(u32(0x06054b50), u16(0), u16(0), u16(files.length), u16(files.length), u32(cdSize), u32(off), u16(0)));
+  return new Blob(parts.concat(cd, [end]), { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+}
+function x(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function exportDocx() {
+  var t = exportRows(), s = ST.student;
+  function p(text, bold, size) { return '<w:p><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>' + (bold ? "<w:b/>" : "") + '<w:sz w:val="' + (size || 24) + '"/></w:rPr><w:t xml:space="preserve">' + x(text) + "</w:t></w:r></w:p>"; }
+  function cell(text, bold) { return '<w:tc><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/>' + (bold ? "<w:b/>" : "") + '<w:sz w:val="20"/></w:rPr><w:t xml:space="preserve">' + x(text) + "</w:t></w:r></w:p></w:tc>"; }
+  var b = "w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"000000\"";
+  var tbl = '<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders><w:top ' + b + '/><w:left ' + b + '/><w:bottom ' + b + '/><w:right ' + b + '/><w:insideH ' + b + '/><w:insideV ' + b + "/></w:tblBorders></w:tblPr>" +
+    '<w:tr><w:trPr><w:tblHeader/></w:trPr>' + t.head.map(function (h) { return cell(h, true); }).join("") + "</w:tr>" +
+    t.body.map(function (r) { return "<w:tr>" + r.map(function (c) { return cell(c); }).join("") + "</w:tr>"; }).join("") + "</w:tbl>";
+  var doc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' +
+    p("Лабораторна робота №1. " + CFG.title, true, 28) + p("Результати вимірювань на монохроматорі УМ-2") +
+    p("Студент: " + s.name + ", група " + s.group + ", варіант " + s.variant) + p("Дата: " + new Date().toLocaleString("uk-UA")) +
+    p("Uλ – показ вольтметра, мкВ; α0 – поділка барабана.") + tbl +
+    '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="850" w:bottom="1134" w:left="1418" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>';
+  download(zip([
+    ["[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'],
+    ["_rels/.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'],
+    ["word/document.xml", doc]
+  ]), fileBase() + ".docx");
+}
+
+// ---------- службове ----------
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+var hintT = null;
+function hint(t, warn) { var h = $("hint"); h.textContent = t; h.className = "hint" + (warn ? " warn" : ""); }
+function tick() {
+  updateReading();
+  [OV, ZM].forEach(function (o) { if (!o.disp) return; o.disp.textContent = READ.text; o.unit.textContent = READ.unit; o.rng.textContent = rangeLabel(ST.range);
+    if (o.rL) { o.rL.textContent = ST.range > 0 ? "до " + rangeLabel(ST.range - 1) : "мін."; o.rR.textContent = ST.range < RANGES.length - 1 ? "до " + rangeLabel(ST.range + 1) : "макс."; } });
+  if (DEBUG) {
+    var nm = interp(LAM, ST.pos) * 1000;
+    $("dbg").textContent = "ТЕСТ  α0=" + ST.pos.toFixed(2) + "  λ=" + nm.toFixed(1) + " нм  hν=" + (1240 / nm).toFixed(3) + " еВ" +
+      (ST.cassette ? "  αd=" + interp(CFG.cassettes[ST.cassette].ad, ST.pos).toFixed(3) : "") + "  U=" + trueSignal(ST.pos).toFixed(2) + " мкВ  k=" + (variant() ? variant().k_lamp : "");
+  }
+}
+function calibTable() {
+  var h = "<table><tr><th>α0</th><th>λ, мкм</th><th>hν, еВ</th><th>α0</th><th>λ, мкм</th><th>hν, еВ</th></tr>";
+  for (var i = 0; i < 20; i++) h += "<tr><td>" + A0[i] + "</td><td>" + LAM[i].toFixed(3).replace(".", ",") + "</td><td>" + HV[i].toFixed(2).replace(".", ",") + "</td><td>" + A0[i + 20] + "</td><td>" + LAM[i + 20].toFixed(3).replace(".", ",") + "</td><td>" + HV[i + 20].toFixed(2).replace(".", ",") + "</td></tr>";
+  $("calibTbl").innerHTML = h + "</table>";
+}
+var started = false;
+function startLab() {
+  $("login").hidden = true; $("lab").hidden = false; document.body.classList.add("inlab");
+  if (!started) {
+    started = true; document.body.classList.add("inlab"); MOB = isMob(); buildOverview(); buildZoom(); calibTable();
+    addEventListener("resize", function () { var m = isMob(); if (m !== MOB) { MOB = m; buildOverview(); buildZoom(); drawShelf(); drawSlot(); renderPanel(); drawDrum(); tick(); } });
+    $("btnAdd").onclick = addPoint;
+    $("btnFinish").onclick = function () { if (!isComplete()) return; ST.done = true; save(); pushStatus("complete"); renderPanel(); hint("Вимірювання завершено. Збережіть таблицю (Word або CSV) для звіту."); };
+    $("btnCsv").onclick = exportCsv; $("btnDocx").onclick = exportDocx;
+    $("btnReset").onclick = function () { if (confirm("Видалити всі вимірювання і почати спочатку?")) { ST.data = {}; ST.done = false; ST.cassette = null; save(); drawShelf(); drawSlot(); renderPanel(); pushStatus("reset"); hint("Таблицю очищено."); } };
+    document.addEventListener("keydown", function (e) {
+      if (!$("scene").classList.contains("zoomed")) return;
+      if (e.key === "ArrowUp") { move(e.shiftKey ? 10 : 1); e.preventDefault(); }
+      if (e.key === "ArrowDown") { move(e.shiftKey ? -10 : -1); e.preventDefault(); }
+      if (e.key === "Enter") addPoint();
+    });
+    setInterval(tick, 300);
+    if (DEBUG) $("dbg").hidden = false;
+  }
+  drawShelf(); drawSlot(); renderPanel(); drawDrum(); updateBeam(); tick();
+  if (ST.cassette) hint("У тримачі: " + cName(ST.cassette) + ". Торкніться барабана, щоб наблизитися.");
+}
+init();
+})();
+</script>
+</body>
+</html>
