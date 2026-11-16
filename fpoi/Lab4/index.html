@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ЛР 4. Енергонезалежна пам'ять</title>
+<style>
+/* Кольори беруться зі спільного оформлення сайту (site.js): --bg, --card, --ink, --mut, --line, --acc */
+:root{
+  --panel:var(--card,#fff); --board:#e6ebf1; --muted:var(--mut,#5d6b7a);
+  --accent:var(--acc,#1f6fb2); --accent-soft:#eaf3fb; --warn:#a3420c; --warn-soft:#fff1e6; --hv:#8a2a6b; --hv-soft:#f6e3ef;
+  --led:#e2382b; --led-off:#cfd6dd; --ok:#127a3a;
+  --sans:system-ui,"Segoe UI",Roboto,sans-serif; --mono:ui-monospace,Consolas,Menlo,monospace;
+}
+*{box-sizing:border-box}
+main{max-width:1280px;margin:0 auto;padding:14px 12px}
+.lr{font-size:12px;font-weight:bold;color:var(--acc);text-transform:uppercase;letter-spacing:.04em}
+.demo{font-size:12.5px;background:#fff4d6;border:1px solid #f0d58a;border-radius:8px;padding:6px 10px}
+.dbg{font:12px monospace;background:#222;color:#9f9;padding:6px 8px;border-radius:8px;white-space:pre-wrap;word-break:break-all}
+h1{font-size:22px;margin:2px 0 6px;line-height:1.25;text-wrap:balance}
+h2{font-size:15px;margin:0 0 8px;font-weight:600;letter-spacing:.01em}
+h3{font-size:12px;margin:0 0 6px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+p{margin:0}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.wrap{display:flex;flex-direction:column;gap:14px}
+.top{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:flex-end;justify-content:space-between}
+.top p{color:var(--muted);max-width:70ch}
+.cols{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:980px){.cols{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.board{background:var(--board);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end}
+.grp{display:flex;flex-direction:column;gap:4px;min-width:0}
+.lbl{font-size:12px;color:var(--muted)}
+.num{display:inline-block;min-width:18px;padding:0 4px;border-radius:9px;background:var(--ink);color:var(--panel);font:600 11px/16px var(--mono);text-align:center;margin-right:4px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:6px 10px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+.btn.hv.on{background:var(--hv);border-color:var(--hv)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:var(--panel);padding:6px 10px;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--accent);color:var(--panel)}
+.seg button.hv.on{background:var(--hv)}
+.seg button:disabled{opacity:.5;cursor:not-allowed}
+/* перемикачі */
+.sws{display:grid;grid-template-columns:repeat(18,minmax(0,1fr));gap:4px}
+@media (max-width:620px){.sws{grid-template-columns:repeat(9,minmax(0,1fr))}}
+.sws.d8{grid-template-columns:repeat(8,minmax(0,34px));width:100%;justify-content:center}
+.sw{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+.sw .n{font:600 11px/1 var(--mono);color:var(--muted)}
+.sw .p{font:500 9px/1 var(--mono);color:var(--muted);white-space:nowrap}
+.sw button{width:100%;max-width:30px;height:44px;border:1px solid var(--line);border-radius:5px;background:var(--panel);position:relative;padding:0}
+.sw button::after{content:"";position:absolute;left:3px;right:3px;height:17px;bottom:3px;border-radius:3px;background:var(--muted);transition:transform .12s}
+.sw button.on::after{transform:translateY(-19px);background:var(--accent)}
+.sw button.nc{opacity:.45}
+.sw.gap{margin-left:6px}
+.leds{display:grid;grid-template-columns:repeat(8,minmax(0,34px));gap:4px;width:100%;justify-content:center}
+.led{display:flex;flex-direction:column;align-items:center;gap:3px}
+.led i{width:18px;height:18px;border-radius:50%;background:var(--led-off);border:1px solid var(--line)}
+.led i.on{background:var(--led);box-shadow:0 0 8px var(--led)}
+.led i.dim{background:color-mix(in srgb,var(--led) 45%,var(--led-off))}
+.led span{font:500 9px/1 var(--mono);color:var(--muted)}
+.push{min-width:92px;border:1px solid var(--line);border-bottom-width:4px;border-radius:8px;background:var(--panel);padding:8px 10px;text-align:left}
+.push.on{border-bottom-width:1px;transform:translateY(3px);background:var(--accent-soft);border-color:var(--accent)}
+.push b{display:block;font:600 14px/1.2 var(--mono)}
+.push small{color:var(--muted);font-size:11px}
+.pwr i{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--led-off);margin-right:6px}
+.pwr.on i{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.hint{border-left:3px solid var(--accent);background:var(--accent-soft);padding:8px 10px;border-radius:0 6px 6px 0;font-size:14px;min-height:38px}
+.hint.warn{border-color:var(--warn);background:var(--warn-soft)}
+.pcb{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:start}
+@media (max-width:620px){.pcb{grid-template-columns:minmax(0,1fr)}}
+.pcol{display:flex;flex-direction:column;gap:10px;min-width:0}
+.pcol.mid{align-items:stretch}.pcol.mid .grp{align-items:center}.pcol.mid .module{align-self:center}.pcol:first-child{max-width:150px}.pcol .seg{align-self:flex-start}.pcol .push{min-width:0}
+@media (max-width:620px){.pcol:first-child{max-width:none}}
+.jack{font:500 11px/1.6 var(--mono);color:var(--muted);border:1px dashed var(--line);border-radius:5px;padding:2px 8px;align-self:flex-start}
+.module{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:10px;display:flex;flex-direction:column;gap:8px;align-items:center;width:100%;max-width:300px}
+.module.bad{border-color:var(--warn);background:var(--warn-soft)}
+.chip{background:var(--ink);color:var(--panel);border-radius:5px;padding:16px 14px;font-weight:600;font-size:14px}
+.dipv{display:flex;flex-direction:column;gap:3px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 6px}
+.swh{display:grid;grid-template-columns:18px 40px auto;gap:6px;align-items:center}
+.swh .n{font:600 11px/1 var(--mono);color:var(--muted);text-align:right}
+.swh .p{font:500 10.5px/1 var(--mono);color:var(--muted)}
+.swh button{width:40px;height:19px;border:1px solid var(--line);border-radius:4px;background:var(--bg);position:relative;padding:0}
+.swh button::after{content:"";position:absolute;top:2px;bottom:2px;left:2px;width:16px;border-radius:2px;background:var(--muted);transition:transform .12s}
+.swh button.on::after{transform:translateX(18px);background:var(--accent)}
+.swh button.nc{opacity:.45}
+select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-width:100%}
+.vt2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.vbox{border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.vbox b.big{font:600 20px/1.2 var(--mono)}
+.tut{border:1px solid var(--accent);background:var(--accent-soft);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.tut .stp{font:600 12px/1 var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.tut .txt{font-size:15px;max-width:80ch}
+/* всередині */
+.pins{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px}
+.pin{border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+.pin .v{font:600 15px/1.2 var(--mono)}
+.pin .s{font-size:11px;color:var(--muted)}
+.pin.hv{border-color:var(--hv);background:var(--hv-soft)}
+.blocks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.blk{border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:12.5px;line-height:1.25;min-height:46px;color:var(--muted);transition:background .2s}
+.blk b{display:block;color:var(--ink);font-weight:600;font-size:12.5px}
+.blk.act{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.blk.hvb.act{border-color:var(--hv);background:var(--hv-soft)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;white-space:nowrap}
+th{color:var(--muted);font-weight:500}
+tr.act td{background:var(--accent-soft);font-weight:600}
+td.mono,th.mono{font-family:var(--mono)}
+.fsm{display:flex;flex-direction:column;gap:6px}
+.fsm .ln{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12px}
+.st{border:1px solid var(--line);border-radius:12px;padding:2px 9px;font:500 12px/1.5 var(--mono);color:var(--muted)}
+.st.act{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+.arrow{color:var(--muted);font:12px var(--mono)}
+.cells{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
+.cell{border:1px solid var(--line);border-radius:6px;padding:4px 2px 5px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.cell .wl{width:80%;height:5px;border-radius:2px;background:var(--muted)}
+.cell .fg{width:80%;height:22px;border:1.5px solid var(--ink);border-radius:3px;display:flex;flex-wrap:wrap;gap:2px;align-items:center;justify-content:center;padding:2px;background:var(--panel)}
+.cell .fg i{width:4px;height:4px;border-radius:50%;background:var(--hv)}
+.cell .ch{width:80%;height:4px;border-radius:2px;background:var(--line)}
+.cell.one .ch{background:var(--accent)}
+.cell .bit{font:600 15px/1 var(--mono)}
+.cell .vt{font-size:9.5px;color:var(--muted);line-height:1;text-align:center}
+.cell .q{font:500 10px/1 var(--mono);color:var(--muted)}
+.cell.inj .fg{animation:inj .9s ease-out}
+.cell.ej .fg{animation:ej .9s ease-out}
+@keyframes inj{0%{background:var(--hv);transform:scale(1.15)}100%{background:var(--panel);transform:none}}
+@keyframes ej{0%{background:var(--accent);transform:scale(1.15)}100%{background:var(--panel);transform:none}}
+@media (prefers-reduced-motion:reduce){.cell.inj .fg,.cell.ej .fg{animation:none}.sw button::after{transition:none}}
+.feed{display:flex;flex-direction:column;gap:6px}
+.ev{border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-size:13.5px}
+.ev:first-child{border-color:var(--accent)}
+.ev.warn{border-color:var(--warn);background:var(--warn-soft)}
+.ev b{display:block;font-weight:600}
+.tag{display:inline-block;font:500 10.5px/1.5 var(--mono);border:1px solid var(--line);border-radius:4px;padding:0 5px;color:var(--muted);margin-left:4px;vertical-align:1px}
+.note{font-size:12.5px;color:var(--muted)}
+/* низ */
+.low{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:980px){.low{grid-template-columns:minmax(0,1fr)}}
+canvas{width:100%;height:auto;border:1px solid var(--line);border-radius:6px;background:var(--board);display:block}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.steps li{display:flex;gap:8px;align-items:baseline}
+.steps .ck{font:600 12px/18px var(--mono);width:18px;height:18px;border:1px solid var(--line);border-radius:4px;text-align:center;flex:none;color:transparent}
+.steps li.done .ck{background:var(--ok);border-color:var(--ok);color:var(--panel)}
+.steps li.bad .ck{background:var(--warn);border-color:var(--warn);color:var(--panel)}
+.steps li.inf .ck{color:var(--muted)}
+.steps.diag{border:1px solid var(--line);border-radius:8px;padding:10px;gap:8px}
+.shot{display:flex;flex-direction:column;gap:6px}.shot img{max-width:100%;border:1px solid var(--line);border-radius:6px}
+a.btn{text-decoration:none;display:inline-block}
+.jr{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:6px}
+.jr th{position:sticky;top:0;background:var(--panel)}
+details summary{cursor:pointer;font-weight:600;font-size:14px}
+details ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:4px}
+details > div{padding-top:8px;display:flex;flex-direction:column;gap:6px;font-size:14px;max-width:75ch}
+textarea{width:100%;font:12px var(--mono);height:110px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);padding:6px}
+</style>
+</head>
+<body data-root="../">
+<main>
+<div class="wrap">
+<div class="top">
+  <div>
+    <div class="lr">Лабораторна робота №4</div>
+    <h1>Енергонезалежна пам'ять</h1>
+    <p>Віртуальний макет для запису, зчитування і стирання EEPROM W27C512 та Flash SST39SF010A. Праворуч видно, що відбувається всередині мікросхеми після кожної дії.</p>
+  </div>
+  <div class="row">
+    <button class="btn" id="tglInside" data-a="inside"></button>
+    <button class="btn" id="btnReset" data-a="reset">Почати спочатку</button>
+  </div>
+</div>
+
+<section class="card" id="task"></section>
+
+<details class="card" id="help">
+  <summary>Інструкція: як керувати макетом</summary>
+  <div>
+    <p><b>Органи керування.</b> Адресні перемикачі 1–17 – це A0–A16, положення ON = «1». Перемикач 18 – дозвіл запису WE для Flash (ON = WE# = 0). Перемикачі даних Q: ON = «1»; під час зчитування всі мають бути вимкнені, інакше вони перебивають вихід мікросхеми. Кнопки CE та OE: клік натискає, другий клік відпускає. CE натиснута – на CE «0». OE відпущена – на OE «0»; натиснута – високий рівень (для EEPROM це напруга блока 12–14 В, для Flash – 5 В).</p>
+    <p><b>Переведення числа.</b> Завдання подано в десятковій системі. Переведіть адресу і байт у двійкову. Молодший біт – перемикач 1 (A0) і DQ0. Приклад: 165 = 128 + 32 + 4 + 1 = 10100101b → увімкнути DQ7, DQ5, DQ2, DQ0.</p>
+    <p><b>EEPROM W27C512 (додаток 2).</b></p>
+    <ol>
+      <li><b>Стирання.</b> Блок живлення 14 В. Усі адресні перемикачі вимкнути, усі 8 перемикачів даних увімкнути. Перемичка 14 (шина → A9) підключена. Натиснути OE (14 В на OE/VPP), потім натиснути і відпустити CE. Відпустити OE, відключити перемичку 14.</li>
+      <li><b>Запис.</b> Блок живлення 12 В, перемичка 14 відключена. Виставити адресу і байт. Натиснути OE (12 В на OE/VPP), потім натиснути і відпустити CE. Відпустити OE.</li>
+      <li><b>Зчитування.</b> Вимкнути всі перемикачі даних. Виставити адресу. OE відпущена, натиснути CE – індикатори показують байт.</li>
+    </ol>
+    <p><b>Flash SST39SF010A (додаток 3).</b> Перед встановленням модуля вимкнути живлення і відключити блок 12–14 В. Один «блок» таблиці додатка 3 = один цикл: виставити адресу і дані, натиснути CE, відпустити CE. Під час циклів перемикач 18 (WE) увімкнено, OE натиснута.</p>
+    <ol>
+      <li><b>Стирання кристала, 6 циклів:</b> 5555h/AAh, 2AAAh/55h, 5555h/80h, 5555h/AAh, 2AAAh/55h, 5555h/10h.</li>
+      <li><b>Запис байта, 4 цикли:</b> 5555h/AAh, 2AAAh/55h, 5555h/A0h, адреса комірки / байт.</li>
+      <li><b>Зчитування.</b> Вимкнути перемикач 18 і всі перемикачі даних, відпустити OE, виставити адресу, натиснути CE.</li>
+    </ol>
+    <p>Коди: 5555h – увімкнено перемикачі 1, 3, 5, 7, 9, 11, 13, 15; 2AAAh – перемикачі 2, 4, 6, 8, 10, 12, 14. AAh = 10101010b, 55h = 01010101b, A0h = 10100000b, 80h = 10000000b, 10h = 00010000b.</p>
+    <p><b>Осцилограма.</b> Виставити адресу записаної комірки, перемикачем 11 підключити генератор до OE, натиснути CE. Курсорами виміряти затримку між спадом OE і появою даних та записати Δt у журнал. Повернути перемикач 11 у положення «від кнопки».</p>
+    <p><b>Припущення моделі.</b> Імпульс запису 100 мкс і стирання 100 мс для W27C512 формує стенд після натискання CE. Кнопки без брязкоту. Часи затримок кожного екземпляра мікросхеми випадкові в межах даташита.</p>
+  </div>
+</details>
+
+<div class="cols">
+  <section class="card" id="stand"></section>
+  <section class="card" id="inside"></section>
+</div>
+<div class="low">
+  <section class="card" id="scope"></section>
+  <section class="card" id="right2"></section>
+</div>
+</div>
+</main>
+
+<script src="../../site.js"></script>
+<script src="config.js"></script>
+<script src="settings.js"></script>
+<script id="model">
+/* ===== Модель мікросхем і стенда (без DOM) ===== */
+var M = (function(){
+  function hash(a, seed){ var x = Math.imul((a + seed) | 0, 2654435761) >>> 0; x ^= x >>> 15; x = Math.imul(x, 2246822519) >>> 0; x ^= x >>> 13; return x & 0xFF; }
+  function hx(v, n){ var s = v.toString(16).toUpperCase(); while (s.length < n) s = '0' + s; return s; }
+  function bn(v, n){ var s = v.toString(2); while (s.length < n) s = '0' + s; return s; }
+  function newChip(type, rnd){
+    rnd = rnd || Math.random;
+    var c = { type:type, seed:Math.floor(rnd()*1e6), ov:{}, damaged:false };
+    var T = (typeof window !== 'undefined' && window.CONFIG_FALLBACK && window.CONFIG_FALLBACK.chips && window.CONFIG_FALLBACK.chips[type]) ||
+      (type === 'eeprom' ? { tCE:[28,38], tOE:[11,16], tDF:[9,15] } : { tCE:[42,58], tOE:[18,27], tDF:[10,18] });
+    function pick(r){ return Math.round(r[0] + rnd() * (r[1] - r[0])); }
+    c.t = { tCE:pick(T.tCE), tOE:pick(T.tOE), tDF:pick(T.tDF) };
+    if (type === 'eeprom'){ c.erased = false; }
+    else { c.sect = []; for (var i=0;i<32;i++) c.sect.push(false); c.st = 'READ'; c.latA = 0; }
+    return c;
+  }
+  function rd(c, a){
+    if (c.damaged) return hash(a*7+3, c.seed) & 0x5A;
+    if (Object.prototype.hasOwnProperty.call(c.ov, a)) return c.ov[a];
+    var er = c.type === 'eeprom' ? c.erased : c.sect[a >> 12];
+    return er ? 0xFF : hash(a, c.seed);
+  }
+  function newStand(rnd){
+    var S = { power:false, aux:0, module:'eeprom', addr:[], data:[], ce:false, oe:false, sw10:false, sw11:false, sw14:false,
+      chips:{ eeprom:newChip('eeprom', rnd), flash:newChip('flash', rnd) }, spare:2 };
+    for (var i=0;i<18;i++) S.addr.push(false);
+    for (var j=0;j<8;j++) S.data.push(false);
+    return S;
+  }
+  function pins(S){
+    var A = 0, D = 0, i;
+    for (i=0;i<17;i++) if (S.addr[i]) A |= (1 << i);
+    for (i=0;i<8;i++) if (S.data[i]) D |= (1 << i);
+    var p = { A:A, D:D, CE:S.ce ? 0 : 1, gen:(S.sw10 || S.sw11), A9hv:(S.sw14 && S.aux) ? S.aux : 0 };
+    if (S.module === 'eeprom'){ p.A = A & 0xFFFF; p.OE = S.oe ? (S.aux || 5) : 0; }
+    else { p.OE = S.oe ? 1 : 0; p.WE = S.addr[17] ? 0 : 1; }
+    return p;
+  }
+  /* режим W27C512 за таблицею режимів даташита */
+  function eMode(p){
+    if (p.gen) return p.OE >= 11 ? 'undef' : 'scope';
+    if (p.CE === 1){ if (p.OE >= 13.75) return 'eraseinh'; if (p.OE >= 11) return 'proginh'; return 'standby'; }
+    if (p.OE === 0) return (p.A9hv === 12) ? 'id' : 'read';
+    if (p.OE === 5) return 'outdis';
+    if (p.OE === 14 && p.A9hv === 14) return 'erase';
+    return 'program';
+  }
+  function fMode(p){
+    if (p.gen) return 'scope';
+    if (p.CE === 1) return 'standby';
+    if (p.OE === 0) return 'read';
+    if (p.WE === 0) return 'write';
+    return 'outdis';
+  }
+  function mode(S, p){ return S.module === 'eeprom' ? eMode(p) : fMode(p); }
+  /* що видає мікросхема на шину даних */
+  function out(S, p){
+    if (!S.power) return null;
+    var c = S.chips[S.module], m = mode(S, p);
+    if (S.module === 'eeprom'){
+      if (m === 'read' || m === 'scope') return { val:rd(c, p.A), kind:'array' };
+      if (m === 'id') return { val:(p.A & 1) ? 0x08 : 0xDA, kind:'id' };
+      return null;
+    }
+    if (m === 'read' || m === 'scope'){
+      if (c.st === 'ID' || c.st === 'IDX1' || c.st === 'IDX2') return { val:(p.A & 1) ? 0xB5 : 0xBF, kind:'id' };
+      return { val:rd(c, p.A), kind:'array' };
+    }
+    return null;
+  }
+  function leds(S){
+    var p = pins(S), o = out(S, p), r = { bits:[], conflict:false, drive:!!o, dim:false };
+    if (!S.power){ for (var k=0;k<8;k++) r.bits.push(0); return r; }
+    r.dim = p.gen && !!o;
+    for (var i=0;i<8;i++){
+      var sw = S.data[i] ? 1 : 0, ob = o ? (o.val >> i) & 1 : 0;
+      if (o && sw && !ob) r.conflict = true;
+      r.bits.push(sw || ob);
+    }
+    return r;
+  }
+  var NEXT = { READ:'5555 / AA', U1:'2AAA / 55', U2:'5555 / A0 (запис), 80 (стирання) або 90 (ID)', PGM:'адреса комірки / байт даних',
+    ERS:'5555 / AA', U3:'2AAA / 55', U4:'5555 / 10 (весь кристал) або адреса сектора / 30', ID:'будь-яка адреса / F0 (вихід)', IDX1:'2AAA / 55', IDX2:'5555 / F0' };
+  function flashCycle(c, a, d, ev, rnd){
+    var ca = a & 0x7FFF, st = c.st, pair = hx(ca,4) + ' / ' + hx(d,2);
+    function go(n, txt){ c.st = n; ev.push({ t:'Автомат команд: ' + st + ' → ' + n, b:'Прийнято пару ' + pair + '. ' + txt + ' Масив пам\'яті не змінюється. Далі автомат чекає: ' + NEXT[n] + '.', src:'Висновок з таблиці команд', blocks:['ctl','io'], j:{ act:'Цикл команди', a:ca, d:d, res:st + ' → ' + n } }); }
+    function bad(){ c.st = 'READ'; ev.push({ t:'Послідовність перервано: повернення в READ', b:'У стані ' + st + ' автомат чекав ' + NEXT[st] + ', а отримав ' + pair + '. Невірна команда повертає мікросхему в режим читання, запис не відбувся. Почніть послідовність з першого блоку.', src:'Даташит SST', warn:true, blocks:['ctl'], j:{ act:'Цикл команди', a:ca, d:d, res:'помилка, READ' } }); }
+    switch (st){
+      case 'READ':
+        if (ca === 0x5555 && d === 0xAA) go('U1', 'Це перший байт «пароля» захисту програмних даних.');
+        else if (d === 0xF0) ev.push({ t:'Команда F0: мікросхема вже в режимі читання', b:'Скидання нічого не змінило.', src:'Даташит SST', blocks:['ctl'] });
+        else bad();
+        break;
+      case 'U1': if (ca === 0x2AAA && d === 0x55) go('U2', 'Другий байт «пароля»: кожна лінія A0–A14 і DQ0–DQ7 перемкнулась у протилежний стан.'); else bad(); break;
+      case 'U2':
+        if (ca === 0x5555 && d === 0xA0) go('PGM', 'Команда A0: наступна пара буде адресою і байтом для запису.');
+        else if (ca === 0x5555 && d === 0x80) go('ERS', 'Команда 80 лише готує стирання. Потрібен ще один повний «пароль».');
+        else if (ca === 0x5555 && d === 0x90) { c.st = 'ID'; ev.push({ t:'Режим ідентифікації (Software ID)', b:'Тепер замість масиву на вихід підключено зашиті коди: адреса 0000 → BF (виробник SST), 0001 → B5 (SST39SF010A). Вихід з режиму: будь-яка адреса / F0.', src:'Даташит SST', blocks:['ctl','io'], j:{ act:'Вхід у режим ID', a:ca, d:d, res:'ID' } }); }
+        else if (ca === 0x5555 && d === 0xF0) go('READ', 'Скидання.');
+        else bad();
+        break;
+      case 'PGM':
+        var a17 = a & 0x1FFFF, old = rd(c, a17), nv = old & d, tp = (12.5 + rnd()*6.5);
+        c.ov[a17] = nv; c.st = 'READ';
+        ev.push({ t:'Запис байта: ' + hx(old,2) + ' → ' + hx(nv,2) + ' за адресою ' + hx(a17,5),
+          b:'Адресу зафіксовано по спаду, байт ' + hx(d,2) + ' – по фронту четвертого циклу. Генератор накачування підняв шину витоку сектора приблизно до 12 В, таймер відміряв ' + tp.toFixed(1) + ' мкс. У бітах, де записується «0», гарячі електрони потрапили на плаваючий затвор. Біти з «1» заборонено напругою на бітовій лінії.' + (nv !== d ? ' Результат не збігається з заданим байтом: запис лише перетворює 1 на 0, тому комірку треба спершу стерти.' : ''),
+          src:'Даташит SST + стаття SST про SuperFlash', warn:(nv !== d), blocks:['ctl','pump','timer','xdec','ydec','array','io'],
+          anim:{ kind:'inj', mask:(old & ~nv) & 0xFF }, flag:'fProg', tgt:a17, j:{ act:'Запис байта', a:a17, d:d, res:'у комірці ' + hx(nv,2) + '; ' + tp.toFixed(1) + ' мкс' } });
+        break;
+      case 'ERS': if (ca === 0x5555 && d === 0xAA) go('U3', 'Повторний «пароль» перед стиранням.'); else bad(); break;
+      case 'U3': if (ca === 0x2AAA && d === 0x55) go('U4', 'Залишилась остання пара з кодом стирання.'); else bad(); break;
+      case 'U4':
+        if (d === 0x30){
+          var s = (a >> 12) & 31, ts = 16 + rnd()*7, k;
+          c.sect[s] = true; for (k in c.ov) if ((k >> 12) === s) delete c.ov[k];
+          c.st = 'READ';
+          ev.push({ t:'Стирання сектора ' + s + ' (адреси ' + hx(s << 12,5) + '–' + hx((s << 12) + 0xFFF,5) + ')', b:'Сектор вибирають лише лінії A16–A12. Генератор накачування подав високу напругу на шини слів сектора, витік і бітові лінії – 0 В. Електрони протунелювали з плаваючих затворів у шину слів (Фаулер–Нордгейм). Таймер: ' + ts.toFixed(1) + ' мс. Усі 4096 байтів сектора тепер FF.', src:'Даташит SST + стаття SST про SuperFlash', blocks:['ctl','pump','timer','xdec','array'], anim:{ kind:'ej', mask:0xFF }, flag:'fErase', j:{ act:'Стирання сектора', a:a & 0x1FFFF, d:d, res:'сектор ' + s + ' = FF; ' + ts.toFixed(1) + ' мс' } });
+        } else if (ca === 0x5555 && d === 0x10){
+          var tc = 62 + rnd()*24, q; for (q=0;q<32;q++) c.sect[q] = true; c.ov = {}; c.st = 'READ';
+          ev.push({ t:'Стирання всього кристала', b:'Шостий цикл запустив внутрішню операцію: накачування подало високу напругу на шини слів усіх секторів, електрони протунелювали з плаваючих затворів (Фаулер–Нордгейм). Таймер: ' + tc.toFixed(0) + ' мс. Усі 131 072 байти тепер FF.', src:'Даташит SST + стаття SST про SuperFlash', blocks:['ctl','pump','timer','xdec','array'], anim:{ kind:'ej', mask:0xFF }, flag:'fErase', j:{ act:'Стирання кристала', a:ca, d:d, res:'усе = FF; ' + tc.toFixed(0) + ' мс' } });
+        } else bad();
+        break;
+      case 'ID':
+        if (d === 0xF0){ c.st = 'READ'; ev.push({ t:'Вихід з режиму ID', b:'Команда F0 повернула на вихід масив пам\'яті.', src:'Даташит SST', blocks:['ctl'], j:{ act:'Вихід з ID', a:ca, d:d, res:'READ' } }); }
+        else if (ca === 0x5555 && d === 0xAA) c.st = 'IDX1';
+        break;
+      case 'IDX1': c.st = (ca === 0x2AAA && d === 0x55) ? 'IDX2' : 'ID'; break;
+      case 'IDX2':
+        if (ca === 0x5555 && d === 0xF0){ c.st = 'READ'; ev.push({ t:'Вихід з режиму ID', b:'Послідовність AA–55–F0 повернула на вихід масив пам\'яті.', src:'Даташит SST', blocks:['ctl'], j:{ act:'Вихід з ID', a:ca, d:d, res:'READ' } }); }
+        else c.st = 'ID';
+        break;
+    }
+  }
+  /* одна дія користувача: mut змінює стан органів керування, далі модель реагує на зміну рівнів */
+  function apply(S, mut, rnd){
+    rnd = rnd || Math.random;
+    var ev = [], on0 = S.power, p0 = pins(S), m0 = on0 ? mode(S, p0) : 'off', o0 = out(S, p0);
+    var w0 = on0 && S.module === 'flash' && m0 === 'write';
+    mut(S);
+    var c = S.chips[S.module];
+    if (!S.power){ S.chips.flash.st = 'READ'; return ev; }
+    var p1 = pins(S), m1 = mode(S, p1);
+    if (!on0) ev.push({ t:'Живлення 5 В увімкнено', b: S.module === 'flash' ? 'Автомат команд після ввімкнення завжди в стані READ. Режим ID після вимкнення не зберігається.' : 'W27C512 не має внутрішнього стану: режим визначають лише рівні на виводах у цю мить.', src:'Даташит', blocks:['ctl'] });
+    if (S.module === 'flash' && p1.A9hv && !c.damaged){
+      if (p1.A9hv >= 14){ c.damaged = true; ev.push({ t:'Мікросхему Flash пошкоджено', b:'На вивід A9 подано 14 В, а гранично допустима напруга для SST39SF010A – 13,2 В. За методичкою блок 12–14 В перед встановленням Flash треба відключити. Вимкніть живлення і замініть мікросхему.', src:'Даташит SST (граничні значення)', warn:true, blocks:[], j:{ act:'Перенапруга на A9', a:p1.A, d:p1.D, res:'мікросхема пошкоджена' } }); }
+      else if (!p0.A9hv || !on0) ev.push({ t:'На A9 подано 12 В', b:'Це ще в межах граничних 13,2 В, але Flash не потребує високої напруги. За методичкою додатковий блок має бути відключений.', src:'Даташит SST', warn:true, blocks:[] });
+    }
+    if (c.damaged) return ev;
+    if (S.module === 'eeprom'){
+      if (m1 !== m0 && m1 === 'program'){
+        var old = rd(c, p1.A), nv = old & p1.D, late = (on0 && p0.CE === 0 && p1.CE === 0);
+        c.ov[p1.A] = nv;
+        ev.push({ t:'Імпульс запису 100 мкс: ' + hx(old,2) + ' → ' + hx(nv,2) + ' за адресою ' + hx(p1.A,4),
+          b:'OE/VPP = ' + p1.OE + ' В: вихідні буфери вимкнено, виводи Q стали входами. Спад CE відкрив вікно запису. Зовнішня висока напруга через перемикач VPP потрапила на вибраний рядок; у бітах, де задано «0», на плаваючий затвор додано електрони. Защіпок немає, тому адресу і дані треба тримати весь імпульс.'
+            + (p1.OE !== 12 ? ' Увага: даташит вимагає для запису 12 В (11,75–12,25), а подано ' + p1.OE + ' В.' : '')
+            + (late ? ' Порушено порядок: спершу подають OE/VPP, потім натискають CE.' : '')
+            + (nv !== p1.D ? ' Результат не збігається з заданим байтом: запис лише перетворює 1 на 0, спершу потрібне стирання.' : ''),
+          src:'Даташит Winbond; фізика комірки – типова модель EPROM', warn:(nv !== p1.D || p1.OE !== 12 || late), blocks:['abuf','xdec','ydec','array','io','vpp','ctl'],
+          anim:{ kind:'inj', mask:(old & ~nv) & 0xFF }, flag:'eProg', tgt:p1.A, j:{ act:'Запис байта', a:p1.A, d:p1.D, res:'у комірці ' + hx(nv,2) } });
+      } else if (m1 !== m0 && m1 === 'erase'){
+        if (p1.D === 0xFF && (p1.A & 1) === 0){
+          c.erased = true; c.ov = {};
+          ev.push({ t:'Імпульс стирання 100 мс: увесь кристал = FF', b:'14 В одночасно на A9 і OE/VPP – це «подвійний ключ» режиму стирання: детектор високої напруги на A9 розпізнав команду, а струм стирання надходить з OE/VPP. Спад CE відкрив вікно. З плаваючих затворів усіх 524 288 комірок електрони виведено тунелюванням. Окремий байт стерти неможливо.'
+            + ((p1.A & 0xFDFF) !== 0 ? ' Зауваження: методичка радить усі інші адреси тримати в «0».' : ''),
+            src:'Даташит Winbond; фізика комірки – типова модель', blocks:['hv','vpp','array','ctl'], anim:{ kind:'ej', mask:0xFF }, flag:'eErase', j:{ act:'Стирання кристала', a:p1.A, d:p1.D, res:'усе = FF' } });
+        } else ev.push({ t:'Стирання не виконано', b:'Напруги режиму стирання подано, але умови даташита не виконано: на всіх виводах даних має бути «1» (усі 8 перемикачів даних увімкнено), а A0 = 0.', src:'Даташит Winbond', warn:true, blocks:['hv','ctl'], j:{ act:'Спроба стирання', a:p1.A, d:p1.D, res:'умови не виконано' } });
+      } else if (m1 === 'undef' && m0 !== 'undef'){
+        ev.push({ t:'Генератор і висока напруга одночасно', b:'Осцилограму зчитування знімають при звичайних рівнях. Відпустіть OE або відключіть генератор.', src:'Стенд', warn:true, blocks:[] });
+      }
+    } else {
+      var w1 = (m1 === 'write');
+      if (!w0 && w1){
+        c.latA = p1.A;
+        ev.push({ t:'Спад CE#: адресу ' + hx(p1.A & 0x7FFF,4) + ' зафіксовано', b:'CE# = 0, WE# = 0, OE# = 1 – відкрито цикл запису в шину. Адреса потрапила в адресні защіпки. Дані будуть зафіксовані, коли відпустите CE. Цей цикл нічого не пише в масив: він передає пару «адреса / дані» автомату команд.', src:'Даташит SST', blocks:['abuf','ctl'] });
+      }
+      if (w0 && !w1 && on0){
+        flashCycle(c, c.latA, p0.D, ev, rnd);
+      }
+      if (m1 !== m0 && m1 === 'outdis' && m0 === 'standby' && c.st !== 'READ' && c.st !== 'ID')
+        ev.push({ t:'Цикл запису не почався', b:'CE# = 0 і OE# = 1, але WE# = 1 (перемикач 18 вимкнено). Мікросхема не приймає дані.', src:'Даташит SST', warn:true, blocks:['ctl'] });
+    }
+    var o1 = out(S, p1);
+    if (o1 && !p1.gen && (!o0 || p0.gen || p0.A !== p1.A || o0.val !== o1.val || o0.kind !== o1.kind)){
+      var L = leds(S), shown = 0; for (var i=0;i<8;i++) shown |= L.bits[i] << i;
+      if (o1.kind === 'id') ev.push({ t:'Зчитано код ідентифікації: ' + hx(o1.val,2), b: S.module === 'eeprom' ? '12 В на A9 при звичайному читанні вмикає режим Silicon ID: замість масиву на вихід підключено зашитий код. A0 = 0 → DA (Winbond), A0 = 1 → 08 (W27C512).' : 'Автомат у режимі ID: A0 = 0 → BF (SST), A0 = 1 → B5 (SST39SF010A). Щоб повернутися до даних, подайте команду F0.', src:'Даташит', blocks:['abuf','ctl','io'].concat(S.module === 'eeprom' ? ['hv'] : []), j:{ act:'Зчитування ID', a:p1.A, d:o1.val, res:hx(o1.val,2) } });
+      else ev.push({ t:'Зчитано ' + hx(o1.val,2) + ' (' + bn(o1.val,8) + ') з адреси ' + hx(p1.A, S.module === 'eeprom' ? 4 : 5),
+        b:'Декодери вибрали рядок і 8 стовпців. Комірки без електронів на плаваючому затворі проводять струм – підсилювач видає «1». Комірки з електронами закриті – «0». OE = 0 відкрив вихідні буфери.' + (L.conflict ? ' Увага: увімкнені перемикачі даних перебивають вихід мікросхеми, індикатори показують ' + hx(shown,2) + '. Вимкніть усі перемикачі даних.' : ''),
+        src:'Даташит + загальна фізика', warn:L.conflict, blocks:['abuf','xdec','ydec','array','sa','io','ctl'], flag:(S.module === 'eeprom' ? 'eRead' : 'fRead'), tgt:p1.A, j:{ act:'Зчитування', a:p1.A, d:o1.val, res:hx(L.conflict ? shown : o1.val,2) + (L.conflict ? ' (конфлікт з перемикачами)' : '') } });
+    }
+    return ev;
+  }
+  return { newStand:newStand, newChip:newChip, pins:pins, mode:mode, out:out, leds:leds, apply:apply, rd:rd, hx:hx, bn:bn, NEXT:NEXT };
+})();
+if (typeof module !== 'undefined') module.exports = M;
+</script>
+
+<script>
+/* ===== Інтерфейс ===== */
+(function(){
+  var CFG = window.CONFIG_FALLBACK || {}, SETTINGS = window.SETTINGS || { script_url:'' };
+  var DEBUG = /[?&]debug=1/.test(location.search);
+  function toStudents(groups, variants){
+    var vm = {}, out = []; (variants || []).forEach(function(v){ vm[String(v.variant)] = v; });
+    Object.keys(groups || {}).forEach(function(g){ groups[g].forEach(function(s){ var v = vm[String(s.variant)]; if (!v) return;
+      out.push({ id:g + '|' + s.name, group:g, name:s.name, variant:s.variant, ea:+v.eeprom_addr, ed:+v.eeprom_data, fa:+v.flash_addr, fd:+v.flash_data }); }); });
+    return out;
+  }
+  var DEMO = toStudents(CFG.demo_groups, CFG.demo_variants);
+  var KEY = 'fpoi_lab4_v1', hx = M.hx, bn = M.bn;
+  var UI = { inside:true, feed:[], journal:[], flags:{}, tgt:{}, anim:null, lastBlocks:[], hint:null, resetArm:false,
+    sc:{ tdiv:20, edge:'fall', bit:0, c1:20, c2:60 }, students:DEMO, demo:true, loadMsg:'', group:'', student:null, tutor:null };
+  var S = M.newStand();
+  try { var raw = localStorage.getItem(KEY); if (raw){ var o = JSON.parse(raw); if (o && o.S && o.S.chips){ S = o.S; UI.journal = o.journal || []; UI.flags = o.flags || {}; UI.tgt = o.tgt || {}; UI.inside = o.inside !== false; if (o.sc) UI.sc = o.sc; UI.student = o.student || null; UI.group = o.group || ''; UI.tutor = o.tutor || null; } } } catch(e){}
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify({ S:S, journal:UI.journal.slice(-400), flags:UI.flags, tgt:UI.tgt, inside:UI.inside, sc:UI.sc, student:UI.student, group:UI.group, tutor:UI.tutor })); } catch(e){} }
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  var CHIP = { eeprom:{ name:'W27C512', full:'EEPROM W27C512, 64K × 8', aw:16 }, flash:{ name:'SST39SF010A', full:'Flash SST39SF010A, 128K × 8', aw:17 } };
+
+  function act(mut){
+    UI.anim = null; UI.hint = null; UI.diag = null;
+    var seen = [], ev = M.apply(S, mut);
+    if (ev.length){ UI.lastBlocks = []; }
+    ev.forEach(function(e){
+      UI.feed.unshift(e); if (e.blocks) UI.lastBlocks = e.blocks; if (e.anim) UI.anim = e.anim;
+      if (e.j){ var d = new Date(); UI.journal.push({ n:UI.journal.length + 1, t:('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2), m:CHIP[S.module].name, act:e.j.act, a:hx(e.j.a, S.module === 'eeprom' ? 4 : 5), d:hx(e.j.d,2), res:e.j.res }); }
+      if (e.flag) seen.push(e.flag);
+      if (e.flag === 'eProg' || e.flag === 'fProg'){
+        var V = UI.student, okV = !V || (e.flag === 'eProg' ? (e.tgt === V.ea && M.rd(S.chips.eeprom, e.tgt) === V.ed) : (e.tgt === V.fa && M.rd(S.chips.flash, e.tgt) === V.fd));
+        if (okV){ UI.flags[e.flag] = true; UI.tgt[e.flag] = e.tgt; }
+      }
+      else if (e.flag === 'eRead'){ if (UI.flags.eProg && UI.tgt.eProg === e.tgt && !e.warn) UI.flags.eRead = true; }
+      else if (e.flag === 'fRead'){ if (UI.flags.fProg && UI.tgt.fProg === e.tgt && !e.warn) UI.flags.fRead = true; }
+      else if (e.flag) UI.flags[e.flag] = true;
+    });
+    UI.feed = UI.feed.slice(0, 6);
+    tutorStep(seen);
+    if (ev.some(function(e){ return e.j; })) sendStatus();
+    render();
+  }
+  var stTimer = null;
+  function sendStatus(){
+    if (!SETTINGS.script_url || !UI.student) return;
+    clearTimeout(stTimer);
+    stTimer = setTimeout(function(){
+      var f = UI.flags, V = UI.student, keys = ['eErase','eProg','eRead','eScope','fErase','fProg','fRead','fScope'];
+      var body = { action:'status', lab:4, group:V.group, name:V.name, variant:V.variant, flags:f, complete:keys.every(function(k){ return !!f[k]; }), actions:UI.journal.length, last:Date.now() };
+      try { fetch(SETTINGS.script_url, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body:JSON.stringify(body) }).catch(function(){}); } catch(e){}
+    }, 4000);
+  }
+
+  /* ---------- навчання ---------- */
+  function cyc(k, n, what, a, d, st0, next, back, flag){
+    return { t:what + ', цикл ' + k + ' з ' + n + '. Виставте адресу ' + a + ' і дані ' + d + '. Потім натисніть і відпустіть CE.', st0:st0, back:back,
+      p:function(s, c, ev){ return flag ? !!ev[flag] : (c.st === next && !s.ce); } };
+  }
+  var A5 = '5555h (перемикачі 1, 3, 5, 7, 9, 11, 13, 15 – ON, решта вимкнені)', A2 = '2AAAh (перемикачі 2, 4, 6, 8, 10, 12, 14 – ON, решта вимкнені)';
+  var TUT = {
+    eeprom:{ name:'EEPROM W27C512', steps:[
+      { t:'Підготовка. Живлення вимкнено. Встановіть модуль EEPROM і виберіть на гнізді 12–14 В напругу 14 В: вона потрібна для стирання.', p:function(s){ return s.module === 'eeprom' && s.aux === 14; } },
+      { t:'Увімкніть живлення 5 В.', p:function(s){ return s.power; } },
+      { t:'Стирання. Вимкніть усі адресні перемикачі та увімкніть усі 8 перемикачів даних: даташит вимагає «1» на всіх виводах даних.', p:function(s, c, ev, p){ return p.A === 0 && p.D === 255; } },
+      { t:'Підключіть перемичку 14 (шина 12–14 В → A9) і натисніть OE. Тепер 14 В подано одразу на A9 і OE/VPP – це «подвійний ключ» режиму стирання.', p:function(s){ return s.sw14 && s.oe; } },
+      { t:'Натисніть CE: стенд сформує імпульс стирання 100 мс. Подивіться праворуч, як електрони залишають плаваючі затвори.', p:function(s, c, ev){ return !!ev.eErase; } },
+      { t:'Відпустіть CE, потім OE. Відключіть перемичку 14 і вимкніть усі перемикачі даних.', p:function(s, c, ev, p){ return !s.ce && !s.oe && !s.sw14 && p.D === 0; } },
+      { t:'Запис. Перемкніть блок живлення на 12 В – це напруга запису.', p:function(s){ return s.aux === 12; } },
+      { t:'Тренувальна комірка 5, байт 170. Адреса 5 = 101b → перемикачі 1 і 3. Байт 170 = 10101010b → DQ7, DQ5, DQ3, DQ1.', p:function(s, c, ev, p){ return p.A === 5 && p.D === 170; } },
+      { t:'Натисніть OE (на OE/VPP піде 12 В, виводи даних стануть входами), потім натисніть CE: імпульс запису 100 мкс.', p:function(s, c, ev){ return !!ev.eProg; } },
+      { t:'Відпустіть CE, потім OE. Вимкніть усі перемикачі даних, щоб вони не заважали зчитуванню.', p:function(s, c, ev, p){ return !s.ce && !s.oe && p.D === 0; } },
+      { t:'Зчитування. Адреса 5 вже виставлена, OE відпущена. Натисніть CE: індикатори покажуть 10101010b = 170.', p:function(s, c, ev){ return !!ev.eRead; } },
+      { t:'Готово. Відпустіть CE. Тепер виконайте те саме самостійно для комірки і байта свого варіанта. Перед записом повторіть стирання.', p:function(){ return false; } } ] },
+    flash:{ name:'Flash SST39SF010A', steps:[
+      { t:'Підготовка. Вимкніть живлення, відпустіть CE та OE, відключіть блок 12–14 В і перемичку 14: Flash працює лише від 5 В. Встановіть модуль Flash.', p:function(s){ return s.module === 'flash' && s.aux === 0 && !s.sw14 && !s.ce && !s.oe; } },
+      { t:'Увімкніть живлення. Увімкніть перемикач 18 (WE) і натисніть OE. Тепер кожне натискання і відпускання CE – один цикл запису в шину.', p:function(s){ return s.power && s.addr[17] && s.oe && !s.ce; } },
+      cyc(1, 6, 'Стирання кристала', A5, 'AAh (DQ7, DQ5, DQ3, DQ1)', 'READ', 'U1', 2),
+      cyc(2, 6, 'Стирання кристала', A2, '55h (DQ6, DQ4, DQ2, DQ0)', 'U1', 'U2', 2),
+      cyc(3, 6, 'Стирання кристала', A5, '80h (тільки DQ7)', 'U2', 'ERS', 2),
+      cyc(4, 6, 'Стирання кристала', A5, 'AAh (DQ7, DQ5, DQ3, DQ1)', 'ERS', 'U3', 2),
+      cyc(5, 6, 'Стирання кристала', A2, '55h (DQ6, DQ4, DQ2, DQ0)', 'U3', 'U4', 2),
+      cyc(6, 6, 'Стирання кристала', A5, '10h (тільки DQ4)', 'U4', 'READ', 2, 'fErase'),
+      cyc(1, 4, 'Запис байта', A5, 'AAh (DQ7, DQ5, DQ3, DQ1)', 'READ', 'U1', 8),
+      cyc(2, 4, 'Запис байта', A2, '55h (DQ6, DQ4, DQ2, DQ0)', 'U1', 'U2', 8),
+      cyc(3, 4, 'Запис байта', A5, 'A0h (DQ7 і DQ5)', 'U2', 'PGM', 8),
+      cyc(4, 4, 'Запис байта', 'тренувальної комірки 3 (перемикачі 1 і 2)', '85 = 01010101b (DQ6, DQ4, DQ2, DQ0)', 'PGM', 'READ', 8, 'fProg'),
+      { t:'Зчитування. Вимкніть перемикач 18 (WE) і всі перемикачі даних, відпустіть OE. Адреса 3 вже виставлена. Натисніть CE: індикатори покажуть 01010101b = 85.', p:function(s, c, ev){ return !!ev.fRead; } },
+      { t:'Готово. Відпустіть CE. Тепер виконайте стирання, запис і зчитування самостійно для комірки і байта свого варіанта.', p:function(){ return false; } } ] }
+  };
+  function tutorStep(flags){
+    var T = UI.tutor; if (!T) return; var steps = TUT[T.id].steps;
+    T.ev = T.ev || {}; flags.forEach(function(f){ T.ev[f] = 1; });
+    for (var g = 0; g < 40 && T.i < steps.length - 1; g++){
+      var st = steps[T.i], c = S.chips[S.module];
+      if (st.p(S, c, T.ev, M.pins(S))){ T.i++; T.ev = {}; T.msg = ''; continue; }
+      if (st.st0 && S.module === 'flash' && S.power && !S.ce && c.st !== st.st0 && T.i !== st.back){ T.i = st.back; T.ev = {}; T.msg = 'Послідовність перервано: автомат повернувся в READ. Почніть цей блок команд з першого циклу.'; }
+      break;
+    }
+  }
+
+  /* ---------- завдання за варіантом ---------- */
+  function renderTask(){
+    var h = '<h2>Завдання за варіантом</h2>', groups = [], i;
+    UI.students.forEach(function(s){ if (groups.indexOf(s.group) < 0) groups.push(s.group); });
+    if (groups.indexOf(UI.group) < 0) UI.group = groups.length === 1 ? groups[0] : '';
+    h += '<div class="row"><div class="grp"><label class="lbl" for="selGroup">Група</label><select id="selGroup"><option value="">– оберіть –</option>' + groups.map(function(g){ return '<option' + (g === UI.group ? ' selected' : '') + '>' + esc(g) + '</option>'; }).join('') + '</select></div>';
+    h += '<div class="grp"><label class="lbl" for="selStudent">Студент</label><select id="selStudent"' + (UI.group ? '' : ' disabled') + '><option value="">– оберіть себе –</option>' + UI.students.filter(function(s){ return s.group === UI.group; }).map(function(s){ return '<option value="' + esc(s.id) + '"' + (UI.student && UI.student.id === s.id ? ' selected' : '') + '>' + esc(s.name) + '</option>'; }).join('') + '</select></div></div>';
+    if (UI.loadMsg) h += '<div class="demo" id="loadMsg">' + esc(UI.loadMsg) + '</div>';
+    if (DEBUG){ var ce = S.chips.eeprom, cf = S.chips.flash, V0 = UI.student;
+      h += '<div class="dbg" id="dbg">ТЕСТ  EEPROM: стерто=' + ce.erased + ' tCE/tOE/tDF=' + ce.t.tCE + '/' + ce.t.tOE + '/' + ce.t.tDF + ' нс' + (V0 ? ' mem[' + V0.ea + ']=' + M.rd(ce, V0.ea) : '') +
+        '\nТЕСТ  Flash: стан=' + cf.st + ' tCE/tOE/tOHZ=' + cf.t.tCE + '/' + cf.t.tOE + '/' + cf.t.tDF + ' нс' + (V0 ? ' сектор стерто=' + cf.sect[V0.fa >> 12] + ' mem[' + V0.fa + ']=' + M.rd(cf, V0.fa) : '') + '</div>'; }
+    var V = UI.student;
+    if (V){
+      h += '<div class="vt2" id="variant"><div class="vbox"><div class="lbl">Варіант ' + esc(V.variant) + ' · EEPROM W27C512</div>комірка <b class="big">' + V.ea + '</b>, байт <b class="big">' + V.ed + '</b></div>';
+      h += '<div class="vbox"><div class="lbl">Варіант ' + esc(V.variant) + ' · Flash SST39SF010A</div>комірка <b class="big">' + V.fa + '</b>, байт <b class="big">' + V.fd + '</b></div></div>';
+      h += '<p class="note">Мікросхеми на стенді вже були у використанні: у пам\'яті лишилися чужі дані, тому почніть зі стирання. Числа подано в десятковій системі. Переведіть адресу і байт у двійкову та виставте перемикачами: молодший біт – перемикач 1 (A0) і DQ0. Для кожної мікросхеми: стерти, записати байт у комірку, зчитати його, зняти осцилограму.</p>';
+    } else h += '<p class="note">Оберіть групу і себе у списку, щоб отримати комірку і байт для запису.</p>';
+    var T = UI.tutor;
+    if (T){
+      var st = TUT[T.id].steps;
+      h += '<div class="tut" id="tutor"><span class="stp">Навчання · ' + TUT[T.id].name + ' · крок ' + (T.i + 1) + ' з ' + st.length + '</span><span class="txt" id="tutText">' + esc(st[T.i].t) + '</span>' + (T.msg ? '<span class="note">' + esc(T.msg) + '</span>' : '') + '<div class="row"><button type="button" class="btn" data-a="tutstop">Завершити навчання</button></div></div>';
+    } else {
+      h += '<div class="row"><button type="button" class="btn" id="tutE" data-a="tut" data-v="eeprom">Навчання: EEPROM</button><button type="button" class="btn" id="tutF" data-a="tut" data-v="flash">Навчання: Flash</button><span class="note">Навчання веде крок за кроком на тренувальній комірці. Після нього виконайте свій варіант самостійно.</span></div>';
+    }
+    $('task').innerHTML = h;
+  }
+  function loadStudents(){
+    if (!SETTINGS.script_url){ UI.loadMsg = 'Демо-режим: список студентів умовний, статус нікуди не надсилається.'; return; }
+    function use(d){ var s = toStudents(d.groups, d.variants); if (!s.length) throw new Error('empty'); UI.students = s; UI.demo = false; UI.loadMsg = '';
+      if (UI.student){ var f = s.filter(function(x){ return x.id === UI.student.id; })[0]; UI.student = f || null; } }
+    UI.loadMsg = 'Завантаження списків…';
+    try { fetch(SETTINGS.script_url + '?action=init&lab=4').then(function(r){ return r.json(); }).then(function(d){
+      use(d); try { localStorage.setItem(KEY + '_lists', JSON.stringify(d)); } catch(e){} render();
+    }).catch(function(){
+      var c = null; try { c = JSON.parse(localStorage.getItem(KEY + '_lists')); } catch(e){}
+      try { use(c); UI.loadMsg = 'Немає зв\'язку з таблицею: використано збережений список.'; }
+      catch(e2){ UI.loadMsg = 'Не вдалося отримати список студентів. Перевірте з\'єднання й оновіть сторінку. Працює демо-режим.'; }
+      render();
+    }); } catch(e){ UI.loadMsg = 'Демо-режим.'; }
+  }
+
+  /* ---------- стенд ---------- */
+  function swHtml(i, on, n, pin, nc, cls){
+    return '<div class="sw' + (cls || '') + '"><span class="n">' + n + '</span><button type="button" id="' + i + '" class="' + (on ? 'on' : '') + (nc ? ' nc' : '') + '" data-a="' + i + '" aria-pressed="' + on + '" aria-label="Перемикач ' + n + ' ' + pin + '"></button><span class="p">' + pin + '</span></div>';
+  }
+  function renderStand(){
+    var c = S.chips[S.module], L = M.leds(S), h = '', i;
+    h += '<h2>Макет</h2><div class="board pcb">';
+    /* ліва колонка: генератор, осцилограф, перемички, CE, OE, 12–14 В */
+    h += '<div class="pcol">';
+    h += '<div class="grp"><span class="lbl"><span class="num">12</span>Генератор <span class="num">13</span>Осцилограф</span><span class="jack">BNC · BNC</span></div>';
+    h += '<div class="grp"><span class="lbl"><span class="num">10</span>Генератор → CE</span><button type="button" id="sw10" class="btn' + (S.sw10 ? ' on' : '') + '" data-a="sw10">' + (S.sw10 ? 'підключено' : 'від кнопки') + '</button></div>';
+    h += '<div class="grp"><span class="lbl"><span class="num">11</span>Генератор → OE</span><button type="button" id="sw11" class="btn' + (S.sw11 ? ' on' : '') + '" data-a="sw11">' + (S.sw11 ? 'підключено' : 'від кнопки') + '</button></div>';
+    h += '<button type="button" id="ce" class="push' + (S.ce ? ' on' : '') + '" data-a="ce" aria-pressed="' + S.ce + '"><span class="lbl"><span class="num">9</span>кнопка</span><b>CE</b><small>' + (S.ce ? 'натиснута: «0»' : 'відпущена: «1»') + '</small></button>';
+    var oeTxt = S.oe ? ('натиснута: ' + (S.module === 'eeprom' ? (S.aux ? S.aux + ' В' : '«1» (5 В)') : '«1»')) : 'відпущена: «0»';
+    h += '<button type="button" id="oe" class="push' + (S.oe ? ' on' : '') + '" data-a="oe" aria-pressed="' + S.oe + '"><span class="lbl"><span class="num">8</span>кнопка</span><b>OE' + (S.module === 'eeprom' ? '/VPP' : '') + '</b><small>' + oeTxt + '</small></button>';
+    h += '<div class="grp"><span class="lbl"><span class="num">7</span>Гніздо 12–14 В</span><div class="seg">' +
+      [[0,'відкл.'],[12,'12 В'],[14,'14 В']].map(function(x){ return '<button type="button" id="aux' + x[0] + '" class="' + (x[0] ? 'hv ' : '') + (S.aux === x[0] ? 'on' : '') + '" data-a="aux" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div></div>';
+    h += '</div>';
+    /* центр: дані Q, модуль, індикатори */
+    h += '<div class="pcol mid">';
+    h += '<div class="grp"><span class="lbl"><span class="num">3</span>Перемикачі байта даних Q</span><div class="sws d8">';
+    for (i=7;i>=0;i--) h += swHtml('d' + i, S.data[i], i + 1, 'DQ' + i, false, '');
+    h += '</div></div>';
+    h += '<div class="module' + (c.damaged ? ' bad' : '') + '"><span class="lbl"><span class="num">2</span>Змінний модуль' + (S.power ? ' (міняти при вимкненому живленні)' : '') + '</span>';
+    h += '<div class="chip mono">' + CHIP[S.module].name + '</div>';
+    h += '<div class="seg">' + ['eeprom','flash'].map(function(m){ return '<button type="button" id="mod-' + m + '" class="' + (S.module === m ? 'on' : '') + '" data-a="module" data-v="' + m + '"' + (S.power ? ' disabled' : '') + '>' + (m === 'eeprom' ? 'EEPROM' : 'Flash') + '</button>'; }).join('') + '</div>';
+    h += '<div class="grp"><span class="lbl"><span class="num">14</span>Шина 12–14 В → A9</span><button type="button" id="sw14" class="btn hv' + (S.sw14 ? ' on' : '') + '" data-a="sw14">' + (S.sw14 ? 'підключено' : 'відключено') + '</button></div>';
+    if (c.damaged) h += '<button type="button" class="btn" id="swap" data-a="swapchip"' + (S.power || !S.spare ? ' disabled' : '') + '>Замінити мікросхему (запасних: ' + S.spare + ')</button>';
+    h += '</div>';
+    h += '<div class="grp"><span class="lbl"><span class="num">6</span>Індикатори байта даних</span><div class="leds">';
+    for (i=7;i>=0;i--) h += '<div class="led"><i id="led' + i + '" class="' + (L.bits[i] ? (L.dim ? 'dim' : 'on') : '') + '"></i><span>DQ' + i + '</span></div>';
+    h += '</div></div>';
+    h += '</div>';
+    /* права колонка: живлення, адресні DIP 1–10 і 1–8 */
+    h += '<div class="pcol">';
+    h += '<div class="grp"><span class="lbl"><span class="num">4</span>Живлення 5 В <span class="num">5</span></span><button type="button" id="pwr" class="btn pwr' + (S.power ? ' on' : '') + '" data-a="power"><i></i>' + (S.power ? 'Увімкнено' : 'Вимкнено') + '</button></div>';
+    h += '<div class="grp"><span class="lbl"><span class="num">1</span>Адреса A (ON – праворуч)</span><div class="dipv">';
+    for (i=0;i<18;i++){
+      var pin = i < 17 ? 'A' + i : 'WE', nc = (S.module === 'eeprom' && i >= 16);
+      if (i === 10) h += '</div><div class="dipv">';
+      h += '<div class="swh"><span class="n">' + (i + 1) + '</span><button type="button" id="a' + i + '" class="' + (S.addr[i] ? 'on' : '') + (nc ? ' nc' : '') + '" data-a="a' + i + '" aria-pressed="' + S.addr[i] + '" aria-label="Перемикач ' + (i + 1) + ' ' + pin + '"></button><span class="p">' + (nc ? '–' : pin) + '</span></div>';
+    }
+    h += '</div></div>';
+    h += '</div></div>';
+    var hint = UI.hint || standHint();
+    h += '<div class="hint' + (hint.warn ? ' warn' : '') + '" id="hint">' + esc(hint.t) + '</div>';
+    h += '<div class="row"><button type="button" class="btn" id="btnShotStand" data-a="shotstand">Знімок стенда для звіту</button></div>' + shotHtml('stand', 'stend.png');
+    $('stand').innerHTML = h;
+  }
+  function standHint(){
+    var c = S.chips[S.module];
+    if (!S.power) return { t:'Живлення вимкнено. Встановіть модуль, підключіть потрібний блок живлення і ввімкніть стенд.' };
+    if (c.damaged) return { t:'Мікросхему пошкоджено. Вимкніть живлення, відключіть блок 12–14 В і замініть мікросхему.', warn:true };
+    var p = M.pins(S), m = M.mode(S, p), L = M.leds(S);
+    if (L.conflict) return { t:'Перемикачі даних увімкнені під час зчитування і перебивають вихід мікросхеми. Вимкніть їх.', warn:true };
+    var T = { standby:'CE = «1»: мікросхема не вибрана, виходи у третьому стані.', read:'Зчитування: індикатори показують байт за виставленою адресою.', id:'Режим ідентифікації: на індикаторах код виробника або мікросхеми.',
+      outdis:'Мікросхему вибрано, але виходи вимкнені (OE = «1»).', program:'Режим запису. Щоб записати інший байт, відпустіть CE, змініть адресу чи дані і натисніть CE знову.', proginh:'На OE/VPP висока напруга, CE = «1»: запис заборонено, мікросхема чекає імпульсу CE.',
+      erase:'Режим стирання. Відпустіть CE.', eraseinh:'Напруги стирання подано, CE = «1»: мікросхема чекає імпульсу CE.', scope:'Генератор підключено: дивіться осцилограф.', undef:'Генератор разом з високою напругою на OE – недопустима комбінація.',
+      write:'Цикл запису відкрито: адресу зафіксовано. Відпустіть CE, щоб зафіксувати дані.' };
+    return { t:T[m] || '', warn:(m === 'undef') };
+  }
+
+  /* ---------- всередині ---------- */
+  var EROWS = [ ['read','Read','VIL','VIL','X','DOUT'], ['outdis','Output Disable','VIL','VIH','X','High Z'], ['standby','Standby','VIH','X','X','High Z'], ['program','Program','VIL','12 В','X','DIN'],
+    ['proginh','Program Inhibit','VIH','12 В','X','High Z'], ['erase','Erase','VIL','14 В','14 В','усі «1»'], ['eraseinh','Erase Inhibit','VIH','14 В','X','High Z'], ['id','Silicon ID','VIL','VIL','12 В','DA / 08'] ];
+  var FROWS = [ ['read','Read','VIL','VIL','VIH','DOUT'], ['write','Program / Erase (цикл команди)','VIL','VIH','VIL','DIN'], ['outdis','Output Disable','VIL','VIH','VIH','High Z'], ['standby','Standby','VIH','X','X','High Z'] ];
+  function blk(id, t, s, act, hv){ return '<div class="blk' + (hv ? ' hvb' : '') + (act.indexOf(id) >= 0 ? ' act' : '') + '" id="blk-' + id + '"><b>' + t + '</b>' + s + '</div>'; }
+  function renderInside(){
+    $('tglInside').textContent = UI.inside ? 'Сховати вигляд зсередини' : 'Показати вигляд зсередини';
+    $('tglInside').className = 'btn' + (UI.inside ? ' on' : '');
+    if (!UI.inside){ $('inside').innerHTML = '<h2>Всередині мікросхеми</h2><p class="note">Вигляд зсередини сховано: стенд поводиться як реальний макет, видно лише індикатори.</p>'; return; }
+    var c = S.chips[S.module], ee = (S.module === 'eeprom'), p = M.pins(S), m = S.power ? M.mode(S, p) : 'off', o = M.out(S, p), h = '', i;
+    h += '<h2>Всередині мікросхеми ' + CHIP[S.module].name + '</h2>';
+    if (!S.power){ h += '<p class="note">Живлення вимкнено. Заряд на плаваючих затворах зберігається без живлення – у цьому суть енергонезалежної пам\'яті.</p>'; }
+    /* виводи */
+    h += '<div><h3>Що бачить мікросхема на виводах</h3><div class="pins">';
+    var aw = CHIP[S.module].aw;
+    h += '<div class="pin"><div class="s">Адреса A' + (aw - 1) + '–A0</div><div class="v" id="pinA">' + hx(p.A, ee ? 4 : 5) + 'h</div><div class="s mono">' + bn(p.A, aw) + ' = ' + p.A + '</div></div>';
+    h += '<div class="pin"><div class="s">Перемикачі даних DQ7–DQ0</div><div class="v" id="pinD">' + hx(p.D,2) + 'h</div><div class="s mono">' + bn(p.D,8) + ' = ' + p.D + '</div></div>';
+    h += '<div class="pin"><div class="s">CE' + (ee ? '' : '#') + '</div><div class="v">' + (p.gen && S.sw10 ? 'генератор' : (p.CE ? '«1»' : '«0»')) + '</div><div class="s">' + (p.CE ? 'не вибрана' : 'вибрана') + '</div></div>';
+    if (ee) h += '<div class="pin' + (p.OE >= 11 ? ' hv' : '') + '"><div class="s">OE/VPP</div><div class="v">' + (S.sw11 ? 'генератор' : p.OE + ' В') + '</div><div class="s">' + (p.OE >= 13.75 ? 'напруга стирання' : p.OE >= 11 ? 'напруга запису' : p.OE ? 'виходи вимкнено' : 'виходи відкрито') + '</div></div>';
+    else h += '<div class="pin"><div class="s">OE#</div><div class="v">' + (S.sw11 ? 'генератор' : (p.OE ? '«1»' : '«0»')) + '</div><div class="s">' + (p.OE ? 'виходи вимкнено' : 'виходи відкрито') + '</div></div>';
+    if (!ee) h += '<div class="pin"><div class="s">WE#</div><div class="v">' + (p.WE ? '«1»' : '«0»') + '</div><div class="s">' + (p.WE ? 'запис у шину заборонено' : 'приймає дані') + '</div></div>';
+    h += '<div class="pin' + (p.A9hv ? ' hv' : '') + '"><div class="s">A9</div><div class="v">' + (p.A9hv ? p.A9hv + ' В' : ((p.A >> 9) & 1 ? '«1»' : '«0»')) + '</div><div class="s">' + (p.A9hv ? (ee ? 'службовий режим' : 'не за методичкою') : 'звичайний біт адреси') + '</div></div>';
+    h += '</div></div>';
+    /* блоки */
+    var a = S.power ? UI.lastBlocks.slice() : [];
+    if (S.power && !a.length){
+      if (m === 'read' || m === 'scope') a = ['abuf','xdec','ydec','array','sa','io','ctl'];
+      else if (m === 'id') a = ['abuf','hv','io','ctl'];
+      else if (m === 'outdis') a = ['abuf','xdec','ydec','array','sa','ctl'];
+      else if (m === 'proginh' || m === 'eraseinh') a = ['vpp','ctl'].concat(p.A9hv ? ['hv'] : []);
+      else if (m === 'write') a = ['abuf','ctl'];
+    }
+    h += '<div><h3>Внутрішні блоки (підсвічено активні)</h3><div class="blocks">';
+    h += blk('abuf', ee ? 'Адресні буфери' : 'Адресні буфери і защіпки', ee ? 'без защіпок: бачать рівні постійно' : 'фіксують адресу по спаду', a);
+    h += blk('xdec', 'X-декодер', 'вибирає рядок (шину слів)', a);
+    h += blk('ydec', 'Y-декодер', 'вибирає 8 стовпців (бітові лінії)', a);
+    h += blk('array', 'Матриця комірок', ee ? '524 288 транзисторів з плаваючим затвором' : '32 сектори по 4 КБ', a);
+    h += blk('sa', 'Підсилювачі зчитування', 'є струм → «1», немає → «0»', a);
+    h += blk('io', ee ? 'Буфери вводу/виводу' : 'Буфери і защіпки даних', ee ? 'Q0–Q7, третій стан' : 'фіксують байт по фронту', a);
+    h += blk('ctl', ee ? 'Логіка режимів' : 'Автомат команд', ee ? 'декодує рівні CE, OE/VPP, A9' : 'стан: ' + c.st, a);
+    if (ee){ h += blk('hv', 'Детектор високої напруги на A9', '12 В → ID, 14 В → стирання', a, true); h += blk('vpp', 'Перемикач VPP', 'зовнішні 12/14 В → до комірок', a, true); }
+    else { h += blk('pump', 'Генератор накачування', 'сам робить ≈12 В з 5 В', a, true); h += blk('timer', 'Внутрішній таймер', 'сам відміряє імпульс', a, true); }
+    h += '</div></div>';
+    /* режим / автомат */
+    if (ee){
+      h += '<div><h3>Таблиця режимів з даташита (підсвічено поточний)</h3><div class="tbl"><table><tr><th>Режим</th><th>CE</th><th>OE/VPP</th><th>A9</th><th>Q0–Q7</th></tr>';
+      EROWS.forEach(function(r){ var on = (r[0] === m) || (m === 'scope' && r[0] === 'read'); h += '<tr class="' + (on ? 'act' : '') + '"><td>' + r[1] + '</td><td class="mono">' + r[2] + '</td><td class="mono">' + r[3] + '</td><td class="mono">' + r[4] + '</td><td class="mono">' + r[5] + '</td></tr>'; });
+      h += '</table></div><p class="note">У W27C512 «команда» – це комбінація напруг на виводах. Корпус має 28 виводів і вільного немає, тому VPP суміщено з OE, а службові режими вмикає висока напруга на A9.</p></div>';
+    } else {
+      var st = c.st, vis = (st === 'IDX1' || st === 'IDX2') ? 'ID' : st;
+      function s(n){ return '<span class="st' + (vis === n ? ' act' : '') + '" id="st-' + n + '">' + n + '</span>'; }
+      function ar(t){ return '<span class="arrow">–' + t + '→</span>'; }
+      h += '<div><h3>Автомат команд (підсвічено поточний стан)</h3><div class="fsm">';
+      h += '<div class="ln">' + s('READ') + ar('5555/AA') + s('U1') + ar('2AAA/55') + s('U2') + '</div>';
+      h += '<div class="ln">' + s('U2').replace('id="st-U2"','') + ar('5555/A0') + s('PGM') + ar('адреса/байт') + '<span class="st">запис</span></div>';
+      h += '<div class="ln">' + s('U2').replace('id="st-U2"','') + ar('5555/80') + s('ERS') + ar('5555/AA') + s('U3') + ar('2AAA/55') + s('U4') + ar('5555/10 або сектор/30') + '<span class="st">стирання</span></div>';
+      h += '<div class="ln">' + s('U2').replace('id="st-U2"','') + ar('5555/90') + s('ID') + ar('xx/F0') + '<span class="st">READ</span></div>';
+      h += '</div><p class="note" id="fsmNext">' + (S.power ? 'Автомат чекає: ' + esc(M.NEXT[st]) + '. Будь-яка інша пара повертає в READ.' : 'Після ввімкнення живлення автомат у стані READ.') + ' Адресу команди перевіряють лише лінії A14–A0, тому перемикачі 16 і 17 під час команд не важливі.</p>';
+      h += '<div class="tbl"><table><tr><th>Режим</th><th>CE#</th><th>OE#</th><th>WE#</th><th>DQ</th></tr>';
+      FROWS.forEach(function(r){ var on = (r[0] === m) || (m === 'scope' && r[0] === 'read'); h += '<tr class="' + (on ? 'act' : '') + '"><td>' + r[1] + '</td><td class="mono">' + r[2] + '</td><td class="mono">' + r[3] + '</td><td class="mono">' + r[4] + '</td><td class="mono">' + r[5] + '</td></tr>'; });
+      h += '</table></div></div>';
+    }
+    /* комірки */
+    var v = M.rd(c, p.A), an = UI.anim;
+    h += '<div><h3>8 комірок за адресою ' + hx(p.A, ee ? 4 : 5) + 'h: заряд на плаваючих затворах</h3><div class="cells" id="cells">';
+    for (i=7;i>=0;i--){
+      var b = (v >> i) & 1, cls = 'cell' + (b ? ' one' : '');
+      if (an && ((an.mask >> i) & 1)) cls += (an.kind === 'inj' ? ' inj' : ' ej');
+      h += '<div class="' + cls + '"><span class="q">DQ' + i + '</span><span class="wl"></span><span class="fg">' + (b ? '' : '<i></i><i></i><i></i><i></i><i></i><i></i>') + '</span><span class="ch"></span><span class="bit">' + b + '</span><span class="vt">' + (b ? 'поріг низький' : 'поріг високий') + '</span></div>';
+    }
+    h += '</div><p class="note">Точки – електрони на плаваючому затворі. Немає електронів → транзистор відкривається при читанні → «1». Є електрони → закритий → «0». Запис лише додає електрони (1 → 0); прибрати їх можна тільки стиранням ' + (ee ? 'усього кристала.' : 'сектора або кристала.') + (c.damaged ? ' Мікросхема пошкоджена, вміст недостовірний.' : '') + '</p></div>';
+    /* стрічка */
+    h += '<div><h3>Що щойно відбулося</h3><div class="feed" id="feed">';
+    if (!UI.feed.length) h += '<div class="ev"><b>Ще нічого</b>Виконайте дію на макеті: тут з\'явиться пояснення кожного кроку.</div>';
+    UI.feed.forEach(function(e){ h += '<div class="ev' + (e.warn ? ' warn' : '') + '"><b>' + esc(e.t) + '</b>' + esc(e.b) + ' <span class="tag">' + esc(e.src) + '</span></div>'; });
+    h += '</div></div>';
+    $('inside').innerHTML = h;
+  }
+
+  /* ---------- осцилограф ---------- */
+  function scopeState(){
+    if (!S.power) return { ok:false, why:'Живлення вимкнено.' };
+    if (!S.sw10 && !S.sw11) return { ok:false, why:'Підключіть генератор перемикачем 11 (до OE) або 10 (до CE).' };
+    var p = M.pins(S), c = S.chips[S.module];
+    if (c.damaged) return { ok:false, why:'Мікросхему пошкоджено.' };
+    if (M.mode(S, p) === 'undef') return { ok:false, why:'Відпустіть кнопку OE: на вході висока напруга.' };
+    if (!S.sw10 && p.CE === 1) return { ok:false, why:'Натисніть CE: мікросхема не вибрана, виходи у третьому стані.' };
+    if (!S.sw11 && p.OE !== 0) return { ok:false, why:'Відпустіть OE: виходи вимкнено.' };
+    if (S.module === 'flash' && p.WE === 0 && S.sw10 && S.sw11 === false && p.OE !== 0) return { ok:false, why:'Вимкніть перемикач 18 (WE).' };
+    if (S.data[UI.sc.bit]) return { ok:false, why:'Перемикач даних DQ' + UI.sc.bit + ' увімкнено і перебиває вихід. Вимкніть його.' };
+    var o = M.out(S, p); if (!o) return { ok:false, why:'Мікросхема не видає дані.' };
+    var t = c.t, del = S.sw10 && S.sw11 ? Math.max(t.tCE, t.tOE) : (S.sw10 ? t.tCE : t.tOE);
+    return { ok:true, bit:(o.val >> UI.sc.bit) & 1, del:del, tdf:t.tDF, ch1:(S.sw10 && S.sw11 ? 'CE + OE' : S.sw10 ? 'CE' : 'OE') };
+  }
+  function renderScope(){
+    var sc = UI.sc, st = scopeState(), h = '<h2>Осцилограф <span class="num">13</span></h2>';
+    h += '<div class="row">';
+    h += '<div class="grp"><span class="lbl">Розгортка, нс/под.</span><div class="seg">' + [10,20,50].map(function(x){ return '<button type="button" class="' + (sc.tdiv === x ? 'on' : '') + '" data-a="tdiv" data-v="' + x + '">' + x + '</button>'; }).join('') + '</div></div>';
+    h += '<div class="grp"><span class="lbl">Синхронізація</span><div class="seg"><button type="button" class="' + (sc.edge === 'fall' ? 'on' : '') + '" data-a="edge" data-v="fall">спад</button><button type="button" class="' + (sc.edge === 'rise' ? 'on' : '') + '" data-a="edge" data-v="rise">фронт</button></div></div>';
+    h += '<div class="grp"><span class="lbl">Щуп каналу 2: DQ' + sc.bit + '</span><div class="seg"><button type="button" data-a="bit" data-v="-1" aria-label="Попередній біт">◀</button><button type="button" data-a="bit" data-v="1" aria-label="Наступний біт">▶</button></div></div>';
+    h += '</div>';
+    h += '<canvas id="cv" width="720" height="300" role="img" aria-label="Осцилограма: канал 1 – сигнал генератора, канал 2 – вихід даних"></canvas>';
+    h += '<div class="row">';
+    h += '<div class="grp"><span class="lbl">Курсор 1: <b class="mono">' + sc.c1 + ' нс</b></span><div class="seg"><button type="button" data-a="cur" data-c="c1" data-v="-5">◀◀</button><button type="button" data-a="cur" data-c="c1" data-v="-1">◀</button><button type="button" data-a="cur" data-c="c1" data-v="1">▶</button><button type="button" data-a="cur" data-c="c1" data-v="5">▶▶</button></div></div>';
+    h += '<div class="grp"><span class="lbl">Курсор 2: <b class="mono">' + sc.c2 + ' нс</b></span><div class="seg"><button type="button" data-a="cur" data-c="c2" data-v="-5">◀◀</button><button type="button" data-a="cur" data-c="c2" data-v="-1">◀</button><button type="button" data-a="cur" data-c="c2" data-v="1">▶</button><button type="button" data-a="cur" data-c="c2" data-v="5">▶▶</button></div></div>';
+    h += '<div class="grp"><span class="lbl">Різниця</span><b class="mono" id="dt" style="font-size:18px">Δt = ' + Math.abs(sc.c2 - sc.c1) + ' нс</b></div>';
+    h += '<button type="button" class="btn" data-a="logdt"' + (st.ok ? '' : ' disabled') + '>Записати Δt у журнал</button>';
+    h += '</div>';
+    h += '<p class="note" id="scNote">' + (st.ok ? 'Канал 1 – ' + st.ch1 + ' від генератора, канал 2 – DQ' + sc.bit + '. Середній рівень каналу 2 – третій стан (виходи вимкнено). Затримку вимірюйте між рівнями 50 % і порівняйте з даташитом: ' + (S.module === 'eeprom' ? 'W27C512-45: TCE ≤ 45 нс, TOE ≤ 20 нс, TDF ≤ 20 нс' : 'SST39SF010A-70: TCE ≤ 70 нс, TOE ≤ 35 нс, TOHZ ≤ 25 нс') + '.' : esc(st.why)) + '</p>';
+    h += '<div class="row"><button type="button" class="btn" id="btnShotScope" data-a="shotscope"' + (st.ok ? '' : ' disabled') + '>Знімок осцилограми для звіту</button></div>' + shotHtml('scope', 'oscylohrama.png');
+    $('scope').innerHTML = h;
+    drawScope(st);
+  }
+  function drawScope(st){
+    var cv = $('cv'); if (!cv || !cv.getContext) return;
+    var g = cv.getContext('2d'), W = cv.width, H = cv.height, cs = getComputedStyle(document.documentElement), sc = UI.sc;
+    function col(n){ return cs.getPropertyValue(n).trim() || '#888'; }
+    g.clearRect(0,0,W,H);
+    var L = 46, R = W - 10, T = 10, B = H - 26, pw = R - L, span = sc.tdiv * 10, t0 = sc.tdiv; /* подія синхронізації на 1-й поділці */
+    g.strokeStyle = col('--line'); g.lineWidth = 1; g.font = '11px ' + (cs.getPropertyValue('--mono') || 'monospace'); g.fillStyle = col('--muted'); g.textAlign = 'center';
+    for (var i=0;i<=10;i++){ var x = L + pw * i / 10; g.beginPath(); g.moveTo(x, T); g.lineTo(x, B); g.stroke(); g.fillText(String(i * sc.tdiv), x, H - 8); }
+    g.textAlign = 'left'; g.fillText('нс', R - 14, H - 8 - 12);
+    var y1h = T + 22, y1l = T + 92, y2h = T + 150, y2l = B - 12, y2z = (y2h + y2l) / 2;
+    g.fillText('К1', 4, (y1h + y1l) / 2 + 4); g.fillText('К2', 4, y2z + 22);
+    g.setLineDash([3,4]); g.beginPath(); g.moveTo(L, y2z); g.lineTo(R, y2z); g.stroke(); g.setLineDash([]);
+    if (st.ok){
+      var X = function(t){ return L + pw * t / span; }, tr = 3;
+      var fall = (sc.edge === 'fall');
+      /* К1 */
+      g.strokeStyle = col('--accent'); g.lineWidth = 2; g.beginPath();
+      g.moveTo(L, fall ? y1h : y1l); g.lineTo(X(t0 - tr/2), fall ? y1h : y1l); g.lineTo(X(t0 + tr/2), fall ? y1l : y1h); g.lineTo(R, fall ? y1l : y1h); g.stroke();
+      /* К2 */
+      var yv = st.bit ? y2h : y2l, d = fall ? st.del : st.tdf, te = t0 + d, n;
+      g.strokeStyle = col('--warn'); g.beginPath();
+      var from = fall ? y2z : yv, to = fall ? yv : y2z, tt = fall ? 4 : 8;
+      g.moveTo(L, from);
+      for (var xx = L; xx <= R; xx += 2){
+        var t = (xx - L) / pw * span, k = Math.min(1, Math.max(0, (t - (te - tt/2)) / tt)); n = (Math.sin(xx * 12.9898 + d) * 43758.5453 % 1) * 1.6;
+        g.lineTo(xx, from + (to - from) * k + n);
+      }
+      g.stroke();
+    } else {
+      g.fillStyle = col('--muted'); g.textAlign = 'center'; g.font = '14px ' + (cs.getPropertyValue('--sans') || 'sans-serif'); g.fillText('Немає сигналу', (L + R) / 2, (T + B) / 2);
+    }
+    /* легенда */
+    var lx = R - 250, ly = T + 6; g.font = '11px ' + (cs.getPropertyValue('--sans') || 'sans-serif'); g.textAlign = 'left';
+    g.fillStyle = col('--panel'); g.globalAlpha = .85; g.fillRect(lx - 8, ly - 4, 252, 62); g.globalAlpha = 1; g.strokeStyle = col('--line'); g.lineWidth = 1; g.setLineDash([]); g.strokeRect(lx - 8, ly - 4, 252, 62);
+    function leg(y, c, dash, txt){ g.strokeStyle = c; g.lineWidth = 2; g.setLineDash(dash); g.beginPath(); g.moveTo(lx, y); g.lineTo(lx + 26, y); g.stroke(); g.setLineDash([]); g.fillStyle = col('--ink'); g.fillText(txt, lx + 34, y + 4); }
+    leg(ly + 6, col('--accent'), [], 'К1 – ' + (st.ok ? st.ch1 : 'OE або CE') + ' від генератора');
+    leg(ly + 20, col('--warn'), [], 'К2 – вихід даних DQ' + sc.bit);
+    leg(ly + 34, col('--line'), [3,4], 'третій стан каналу 2 (виходи вимкнено)');
+    leg(ly + 48, col('--ink'), [5,3], 'курсори 1 і 2, Δt = ' + Math.abs(sc.c2 - sc.c1) + ' нс');
+    g.fillStyle = col('--muted'); g.font = '10px monospace'; g.textAlign = 'right';
+    g.fillText('«1»', L - 4, y1h + 4); g.fillText('«0»', L - 4, y1l + 4); g.fillText('«1»', L - 4, y2h + 4); g.fillText('Z', L - 4, y2z + 4); g.fillText('«0»', L - 4, y2l + 4);
+    /* курсори */
+    [['c1', '1'], ['c2', '2']].forEach(function(c){
+      var t = sc[c[0]]; if (t < 0 || t > span) return; var x = L + pw * t / span;
+      g.strokeStyle = col('--ink'); g.lineWidth = 1; g.setLineDash([5,3]); g.beginPath(); g.moveTo(x, T); g.lineTo(x, B); g.stroke(); g.setLineDash([]);
+      g.fillStyle = col('--ink'); g.textAlign = 'center'; g.font = '600 11px monospace'; g.fillText(c[1], x, T + 10);
+    });
+  }
+
+  /* ---------- знімки для звіту ---------- */
+  function who(){ var V = UI.student, d = new Date(); return (V ? V.name + ', ' + V.group + ', варіант ' + V.variant : 'Студента не обрано') + ' · ' + d.toLocaleDateString('uk-UA') + ' ' + ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2); }
+  function shotScope(){
+    var cv = $('cv'), cs = getComputedStyle(document.documentElement), c = document.createElement('canvas'), sc = UI.sc;
+    c.width = cv.width; c.height = cv.height + 64; var g = c.getContext('2d');
+    g.fillStyle = cs.getPropertyValue('--panel').trim(); g.fillRect(0, 0, c.width, c.height);
+    g.fillStyle = cs.getPropertyValue('--board').trim(); g.fillRect(0, 64, c.width, cv.height); g.drawImage(cv, 0, 64);
+    g.fillStyle = cs.getPropertyValue('--ink').trim(); g.font = '600 15px sans-serif'; g.fillText('Осцилограма зчитування · ' + CHIP[S.module].name + ' · адреса ' + M.pins(S).A, 12, 22);
+    g.font = '13px sans-serif'; g.fillText(who(), 12, 40);
+    g.fillText('Розгортка ' + sc.tdiv + ' нс/под., синхронізація: ' + (sc.edge === 'fall' ? 'спад' : 'фронт') + ', курсор 1 = ' + sc.c1 + ' нс, курсор 2 = ' + sc.c2 + ' нс, Δt = ' + Math.abs(sc.c2 - sc.c1) + ' нс', 12, 57);
+    return c.toDataURL('image/png');
+  }
+  function shotStand(){
+    var cs = getComputedStyle(document.documentElement), c = document.createElement('canvas'); c.width = 900; c.height = 470; var g = c.getContext('2d');
+    function col(n){ return cs.getPropertyValue(n).trim(); }
+    var p = M.pins(S), L = M.leds(S), ee = (S.module === 'eeprom'), i, x, lv = 0; for (i=0;i<8;i++) lv |= L.bits[i] << i;
+    g.fillStyle = col('--panel'); g.fillRect(0, 0, 900, 470); g.fillStyle = col('--board'); g.fillRect(12, 66, 876, 392);
+    g.fillStyle = col('--ink'); g.font = '600 16px sans-serif'; g.fillText('Стенд «Енергонезалежна пам\'ять» · модуль ' + CHIP[S.module].full, 12, 24);
+    g.font = '13px sans-serif'; g.fillText(who(), 12, 44);
+    function sw(x, y, on, top, bot){ g.strokeStyle = col('--line'); g.fillStyle = col('--panel'); g.fillRect(x, y, 30, 44); g.strokeRect(x + .5, y + .5, 30, 44); g.fillStyle = on ? col('--accent') : col('--muted'); g.fillRect(x + 4, on ? y + 4 : y + 24, 22, 16);
+      g.fillStyle = col('--muted'); g.font = '11px monospace'; g.textAlign = 'center'; g.fillText(top, x + 15, y - 5); g.fillText(bot, x + 15, y + 58); g.textAlign = 'left'; }
+    g.fillStyle = col('--ink'); g.font = '600 13px sans-serif'; g.fillText('Адресні перемикачі 1–18 (вгорі = ON)', 28, 90);
+    for (i=0;i<18;i++) sw(28 + i * 46, 116, S.addr[i], String(i + 1), i < 17 ? (ee && i === 16 ? '–' : 'A' + i) : (ee ? '–' : 'WE'));
+    g.fillStyle = col('--ink'); g.font = '13px monospace'; g.fillText('Адреса: ' + p.A + ' = ' + hx(p.A, ee ? 4 : 5) + 'h = ' + bn(p.A, ee ? 16 : 17) + 'b', 28, 198);
+    g.font = '600 13px sans-serif'; g.fillText('Перемикачі даних Q', 28, 230); g.fillText('Індикатори', 470, 230);
+    for (i=7;i>=0;i--){ x = 28 + (7 - i) * 46; sw(x, 256, S.data[i], String(i + 1), 'DQ' + i);
+      var lx = 470 + (7 - i) * 46 + 15; g.beginPath(); g.arc(lx, 278, 11, 0, 6.2832); g.fillStyle = L.bits[i] ? col('--led') : col('--led-off'); g.fill(); g.strokeStyle = col('--line'); g.stroke();
+      g.fillStyle = col('--muted'); g.font = '11px monospace'; g.textAlign = 'center'; g.fillText('DQ' + i, lx, 314); g.textAlign = 'left'; }
+    g.fillStyle = col('--ink'); g.font = '13px monospace'; g.fillText('Дані: ' + p.D + ' = ' + hx(p.D,2) + 'h = ' + bn(p.D,8) + 'b', 28, 338);
+    g.fillText('Індикатори: ' + lv + ' = ' + hx(lv,2) + 'h = ' + bn(lv,8) + 'b', 470, 338);
+    g.font = '13px sans-serif';
+    var ln = [ 'Живлення 5 В: ' + (S.power ? 'увімкнено' : 'вимкнено') + '   ·   блок 12–14 В: ' + (S.aux ? S.aux + ' В' : 'відключено') + '   ·   перемичка 14 (→ A9): ' + (S.sw14 ? 'підключена' : 'відключена'),
+      'CE: ' + (S.ce ? 'натиснута («0»)' : 'відпущена («1»)') + '   ·   OE: ' + (S.oe ? 'натиснута' : 'відпущена («0»)') + '   ·   генератор → CE: ' + (S.sw10 ? 'так' : 'ні') + ', → OE: ' + (S.sw11 ? 'так' : 'ні'),
+      'Стан: ' + standHint().t, UI.feed.length ? 'Остання подія: ' + UI.feed[0].t : '' ];
+    ln.forEach(function(t, k){ g.fillText(t.length > 125 ? t.slice(0, 124) + '…' : t, 28, 372 + k * 22); });
+    return c.toDataURL('image/png');
+  }
+  function shotHtml(key, name){
+    var u = UI.shots && UI.shots[key]; if (!u) return '';
+    return '<div class="shot"><img src="' + u + '" alt="Знімок для звіту"><div class="row"><a class="btn" href="' + u + '" download="' + name + '">Завантажити PNG</a><span class="note">Якщо завантаження не почалося: права кнопка миші на зображенні → «Зберегти зображення як…».</span></div></div>';
+  }
+
+  /* ---------- кроки і журнал ---------- */
+  function renderRight2(){
+    var f = UI.flags, V = UI.student, h = '<h2>Хід роботи</h2>' + (V ? '' : '<p class="note">Оберіть себе у списку вгорі: кроки запису зараховуються для комірки і байта вашого варіанта.</p>') + '<ul class="steps" id="steps">';
+    [['eErase','EEPROM: повне стирання (додаток 2)'], ['eProg','EEPROM: запис байта' + (V ? ' ' + V.ed + ' у комірку ' + V.ea : ' в задану комірку')], ['eRead','EEPROM: зчитування записаної комірки'], ['eScope','EEPROM: осцилограма зчитування, Δt у журналі'],
+      ['fErase','Flash: повне стирання (додаток 3)'], ['fProg','Flash: запис байта' + (V ? ' ' + V.fd + ' у комірку ' + V.fa : ' в задану комірку')], ['fRead','Flash: зчитування записаної комірки'], ['fScope','Flash: осцилограма зчитування, Δt у журналі']
+    ].forEach(function(x){ h += '<li class="' + (f[x[0]] ? 'done' : '') + '" id="step-' + x[0] + '"><span class="ck">✓</span><span>' + x[1] + '</span></li>'; });
+    h += '</ul>';
+    h += '<div class="row"><button type="button" class="btn on" id="btnCheck" data-a="check">Перевірити мою роботу</button><span class="note">Порівнює стан мікросхеми з вашим варіантом і підказує, що не так.</span></div>';
+    if (UI.diag){ h += '<ul class="steps diag" id="diag">'; UI.diag.forEach(function(d){ h += '<li class="' + (d.info ? 'inf' : d.ok ? 'done' : 'bad') + '"><span class="ck">' + (d.info ? 'i' : d.ok ? '✓' : '!') + '</span><span>' + esc(d.t) + '</span></li>'; }); h += '</ul>'; }
+    h += '<h2>Журнал</h2><div class="jr"><table id="jr"><tr><th>№</th><th>Час</th><th>Мікросхема</th><th>Дія</th><th>Адреса</th><th>Дані</th><th>Результат</th></tr>';
+    UI.journal.slice().reverse().forEach(function(r){ h += '<tr><td class="mono">' + r.n + '</td><td class="mono">' + r.t + '</td><td>' + r.m + '</td><td>' + esc(r.act) + '</td><td class="mono">' + r.a + '</td><td class="mono">' + r.d + '</td><td>' + esc(r.res) + '</td></tr>'; });
+    if (!UI.journal.length) h += '<tr><td colspan="7" class="note">Журнал порожній. Сюди потрапляють запис, стирання, зчитування і виміряні затримки.</td></tr>';
+    h += '</table></div><div class="row"><button type="button" class="btn" data-a="copy" id="btnCopy">Скопіювати журнал (CSV)</button><span class="note" id="copyMsg"></span></div><textarea id="csv" readonly aria-label="Журнал у форматі CSV" hidden></textarea>';
+    $('right2').innerHTML = h;
+  }
+  /* ---------- перевірка роботи і підказки ---------- */
+  function bitsDiff(a, b){ var x = a ^ b, n = 0; while (x){ n += x & 1; x >>>= 1; } return n; }
+  function diag(){
+    var V = UI.student, r = [], ee = (S.module === 'eeprom'), c = S.chips[S.module], f = UI.flags, p = M.pins(S), k;
+    function ok(t){ r.push({ ok:true, t:t }); } function no(t){ r.push({ ok:false, t:t }); }
+    if (!V){ no('Спершу оберіть себе у списку вгорі: перевірка порівнює вашу роботу з варіантом.'); return r; }
+    var ta = ee ? V.ea : V.fa, td = ee ? V.ed : V.fd, nm = CHIP[S.module].name;
+    r.push({ ok:true, t:'Перевіряю модуль ' + nm + ': комірка ' + ta + ', байт ' + td + '.', info:true });
+    if (c.damaged){ no('Мікросхему пошкоджено перенапругою. Вимкніть живлення, відключіть блок 12–14 В і замініть її.'); return r; }
+    if (!ee && c.st !== 'READ') no('Автомат команд зараз у стані ' + c.st + ' і чекає: ' + M.NEXT[c.st] + '. ' + (c.st === 'ID' ? 'Мікросхема в режимі ідентифікації, тому замість даних читаються BF/B5. Подайте цикл з даними F0h.' : 'Послідовність не завершено.'));
+    /* стирання */
+    var er = ee ? c.erased : c.sect[ta >> 12];
+    if (er) ok('Стирання виконано: ' + (ee ? 'кристал' : 'сектор із вашою коміркою') + ' стерто.');
+    else no(ee ? 'Мікросхему ще не стерто. Потрібно одночасно: блок 14 В, перемичка 14 на A9, OE натиснута, усі 8 перемикачів даних ON, перемикач 1 (A0) вимкнено – і тоді натиснути CE.'
+               : 'Сектор із вашою коміркою не стерто. Потрібні 6 циклів: 5555/AA, 2AAA/55, 5555/80, 5555/AA, 2AAA/55, 5555/10. У кожному циклі: перемикач 18 ON, OE натиснута, натиснути і відпустити CE.');
+    /* запис */
+    var cur = M.rd(c, ta), has = Object.prototype.hasOwnProperty.call(c.ov, ta);
+    if (er && has && cur === td) ok('Запис виконано: у комірці ' + ta + ' зберігається ' + td + '.');
+    else if (er && has){
+      var extra = bitsDiff(cur, td);
+      if ((cur & td) === cur) no('У комірці ' + ta + ' зараз ' + cur + ' (' + bn(cur,8) + 'b), а потрібно ' + td + '. Зайвих нулів: ' + extra + '. Або байт на перемикачах даних був виставлений з помилкою, або в комірку писали двічі. Запис уміє лише 1 → 0, тому спершу повторіть стирання.');
+      else no('У комірці ' + ta + ' зараз ' + cur + ' (' + bn(cur,8) + 'b), а потрібно ' + td + '. Не збігаються ' + extra + ' біт(и): перевірте переведення байта у двійкову систему. Перед повторним записом потрібне стирання.');
+    } else if (er){
+      var other = null; for (k in c.ov) if (c.ov[k] === td){ other = +k; break; }
+      var any = null; for (k in c.ov){ any = +k; break; }
+      if (other !== null) no('Байт ' + td + ' записано в комірку ' + other + ', а за варіантом потрібна ' + ta + '. Адреси відрізняються ' + bitsDiff(other, ta) + ' перемикачем(ами). Перевірте переведення адреси у двійкову систему: молодший біт – перемикач 1.');
+      else if (any !== null) no('Записано в комірку ' + any + ' значення ' + c.ov[any] + ', а за варіантом потрібно ' + td + ' у комірку ' + ta + '. Перевірте і адресу, і байт.');
+      else no(ee ? 'У комірку ще нічого не записано. Запис: блок 12 В, перемичка 14 відключена, адреса і байт на перемикачах, OE натиснута, потім CE.'
+                 : 'У комірку ще нічого не записано. Запис – 4 цикли: 5555/AA, 2AAA/55, 5555/A0, потім адреса комірки / байт.');
+    }
+    /* що зараз на перемикачах */
+    if (!(er && has && cur === td)){
+      var da = bitsDiff(p.A, ta), dd = bitsDiff(p.D, td);
+      r.push({ ok:(da === 0 && dd === 0), info:true, t:'Зараз на перемикачах: адреса ' + p.A + (da ? ' – відрізняється від комірки варіанта ' + da + ' перемикачем(ами)' : ' – збігається з коміркою варіанта') + '; байт ' + p.D + (dd ? ' – відрізняється від байта варіанта ' + dd + ' перемикачем(ами).' : ' – збігається з байтом варіанта.') + (ee ? '' : ' Під час циклів команд тут мають бути коди 5555/2AAA, а не адреса комірки.') });
+      if (ee && S.power && p.OE >= 11 && p.OE !== 12 && !p.A9hv) no('На OE/VPP зараз ' + p.OE + ' В. Для запису даташит вимагає 12 В.');
+      if (ee && S.sw14 && S.aux === 12) no('Перемичка 14 підключена при 12 В: це режим ідентифікації, а не запис. Відключіть її.');
+      if (!ee && S.power && !S.addr[17]) no('Перемикач 18 (WE) вимкнено: цикли команд мікросхема не прийме.');
+      if (!ee && S.power && !S.oe) no('OE відпущена (OE# = 0): запис заблоковано. Під час циклів команд OE має бути натиснута.');
+    }
+    /* зчитування */
+    if (f[ee ? 'eRead' : 'fRead']) ok('Зчитування виконано: записаний байт прочитано з комірки.');
+    else {
+      var L = M.leds(S);
+      no('Записану комірку ще не зчитано. Потрібно: усі перемикачі даних вимкнено, адреса комірки на перемикачах, OE відпущена' + (ee ? '' : ', перемикач 18 вимкнено') + ', CE натиснута.' + (L.conflict ? ' Зараз перемикачі даних увімкнені й перебивають вихід.' : ''));
+    }
+    /* осцилограма */
+    if (f[ee ? 'eScope' : 'fScope']) ok('Осцилограму знято, Δt у журналі відповідає затримці.');
+    else no(UI.scTried ? 'Записана Δt не відповідає затримці на осцилограмі. Курсор 1 ставте на середину спаду каналу 1, курсор 2 – на середину переходу каналу 2.' : 'Осцилограму ще не знято: перемикач 11 – генератор до OE, CE натиснута, курсорами виміряти Δt і записати в журнал.');
+    return r;
+  }
+  function csv(){ return (UI.student ? ['Студент;' + UI.student.name + ';група;' + UI.student.group + ';варіант;' + UI.student.variant] : []).concat(['№;Час;Мікросхема;Дія;Адреса;Дані;Результат'].concat(UI.journal.map(function(r){ return [r.n, r.t, r.m, r.act, r.a, r.d, r.res].join(';'); }))).join('\n'); }
+
+  function render(){ renderTask(); renderStand(); renderInside(); renderScope(); renderRight2(); $('btnReset').textContent = UI.resetArm ? 'Підтвердити: стерти весь прогрес' : 'Почати спочатку'; save(); }
+
+  document.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('[data-a]') : null; if (!b || b.disabled) return;
+    var a = b.getAttribute('data-a'), v = b.getAttribute('data-v');
+    if (a !== 'reset') UI.resetArm = false;
+    if (/^a\d+$/.test(a)){ var i = +a.slice(1); act(function(s){ s.addr[i] = !s.addr[i]; }); }
+    else if (/^d\d$/.test(a)){ var k = +a.slice(1); act(function(s){ s.data[k] = !s.data[k]; }); }
+    else if (a === 'power') act(function(s){ s.power = !s.power; });
+    else if (a === 'aux') act(function(s){ s.aux = +v; });
+    else if (a === 'module') act(function(s){ s.module = v; });
+    else if (a === 'ce') act(function(s){ s.ce = !s.ce; });
+    else if (a === 'oe') act(function(s){ s.oe = !s.oe; });
+    else if (a === 'sw10' || a === 'sw11' || a === 'sw14') act(function(s){ s[a] = !s[a]; });
+    else if (a === 'swapchip'){ if (S.spare > 0){ S.spare--; S.chips[S.module] = M.newChip(S.module); UI.feed.unshift({ t:'Встановлено нову мікросхему', b:'Вміст нової мікросхеми невідомий: почніть зі стирання.', src:'Стенд' }); render(); } }
+    else if (a === 'inside'){ UI.inside = !UI.inside; render(); }
+    else if (a === 'shotstand'){ UI.shots = UI.shots || {}; UI.shots.stand = shotStand(); render(); }
+    else if (a === 'shotscope'){ UI.shots = UI.shots || {}; UI.shots.scope = shotScope(); render(); }
+    else if (a === 'check'){ UI.diag = diag(); render(); }
+    else if (a === 'tut'){ UI.tutor = { id:v, i:0, ev:{}, msg:'' }; tutorStep([]); render(); }
+    else if (a === 'tutstop'){ UI.tutor = null; render(); }
+    else if (a === 'tdiv'){ UI.sc.tdiv = +v; render(); }
+    else if (a === 'edge'){ UI.sc.edge = v; render(); }
+    else if (a === 'bit'){ UI.sc.bit = (UI.sc.bit + (+v) + 8) % 8; render(); }
+    else if (a === 'cur'){ var c = b.getAttribute('data-c'); UI.sc[c] = Math.max(0, Math.min(UI.sc.tdiv * 10, UI.sc[c] + (+v))); render(); }
+    else if (a === 'logdt'){
+      var st = scopeState(); if (!st.ok) return;
+      var d = new Date(), p = M.pins(S), dt = Math.abs(UI.sc.c2 - UI.sc.c1);
+      UI.journal.push({ n:UI.journal.length + 1, t:('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2), m:CHIP[S.module].name, act:'Осцилограма: ' + st.ch1 + ' → DQ' + UI.sc.bit + ', ' + (UI.sc.edge === 'fall' ? 'спад' : 'фронт'), a:hx(p.A, S.module === 'eeprom' ? 4 : 5), d:String(st.bit), res:'Δt = ' + dt + ' нс' });
+      var exp = (UI.sc.edge === 'fall') ? st.del : st.tdf;
+      if (Math.abs(dt - exp) <= (CFG.scope_tol_ns || 3)) UI.flags[S.module === 'eeprom' ? 'eScope' : 'fScope'] = true; else UI.scTried = true;
+      UI.diag = null; sendStatus(); render();
+    }
+    else if (a === 'copy'){
+      var t = csv(), ta = $('csv'), msg = $('copyMsg'); ta.hidden = false; ta.value = t; ta.select();
+      try { navigator.clipboard.writeText(t).then(function(){ msg.textContent = 'Скопійовано. Вставте в таблицю або текстовий файл.'; }, function(){ msg.textContent = 'Виділіть текст нижче і скопіюйте вручну.'; }); } catch(err){ msg.textContent = 'Виділіть текст нижче і скопіюйте вручну.'; }
+    }
+    else if (a === 'reset'){
+      if (!UI.resetArm){ UI.resetArm = true; render(); return; }
+      S = M.newStand(); UI.feed = []; UI.journal = []; UI.flags = {}; UI.tgt = {}; UI.anim = null; UI.lastBlocks = []; UI.resetArm = false; UI.tutor = null; render();
+    }
+  });
+  document.addEventListener('change', function(e){
+    if (e.target.id === 'selGroup'){ UI.group = e.target.value; UI.student = null; UI.flags = {}; UI.tgt = {}; render(); }
+    else if (e.target.id === 'selStudent'){
+      var id = e.target.value; UI.student = UI.students.filter(function(s){ return String(s.id) === id; })[0] || null; UI.flags = {}; UI.tgt = {};
+      S = M.newStand(); UI.feed = []; UI.journal = []; UI.lastBlocks = []; UI.shots = {}; UI.scTried = false; UI.diag = null; render();
+    }
+  });
+  loadStudents();
+  if (window.matchMedia) { try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ renderScope(); }); } catch(e){} }
+  render();
+})();
+</script>
+</body>
+</html>
