@@ -239,6 +239,18 @@ details.sub > summary{font-size:12.5px;font-weight:500;color:var(--muted)}
 .prog .steps{display:block;columns:2 300px;column-gap:24px}.prog .steps li{break-inside:avoid;margin-bottom:3px}
 .chipmod .seg button{background:#e9f6f4;color:#12332f}.chipmod .seg button.on{background:#12332f;color:#fff}.chipmod .seg button:disabled{opacity:.75}
 .pcbx .seg button{background:#f3f1dc;color:#222}
+
+/* об'ємні кнопки: відпущена – чорна і піднята, натиснута – блакитна і втиснута */
+.pbtn .cap{width:38px;height:38px;background:#cfcfc6;border:2px solid #8d8d84;border-radius:5px;box-shadow:inset 0 0 0 2px #e9e9e2;transform:none}
+.pbtn .cap b{width:24px;height:24px;border-radius:4px;background:linear-gradient(160deg,#4a4a4a,#0d0d0d);box-shadow:0 5px 0 #000,0 7px 4px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.35);transform:translateY(-3px);transition:transform .08s,box-shadow .08s}
+.pbtn.on .cap{transform:none;box-shadow:inset 0 0 0 2px #e9e9e2}
+.pbtn.on .cap b{background:linear-gradient(160deg,#6fc0ff,#1565d0);box-shadow:0 1px 0 #0b3b82,0 1px 2px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.5);transform:translateY(3px)}
+.pbtn.blue .cap b{background:linear-gradient(160deg,#4a4a4a,#0d0d0d)}
+.pbtn.blue.on .cap b{background:linear-gradient(160deg,#6fc0ff,#1565d0)}
+.mode{border:1px solid var(--line);border-radius:6px;padding:5px 9px;font-size:13.5px;background:var(--accent-soft)}
+.mode b{font-weight:600}
+.steps small{display:block;color:var(--muted);font-size:12px;line-height:1.25}
+.leg{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:13px}.leg b{font-family:var(--mono)}
 </style>
 </head>
 <body data-root="../">
@@ -256,6 +268,13 @@ details.sub > summary{font-size:12.5px;font-weight:500;color:var(--muted)}
 <details class="card" id="help">
   <summary>Шпаргалка</summary>
   <div>
+    <p><b>Що таке сигнали.</b></p>
+    <div class="leg"><b>CE</b><span>Chip Enable – «вибір мікросхеми». «0» (кнопка натиснута) – мікросхема вибрана й працює; «1» – вона відпочиває.</span>
+      <b>OE</b><span>Output Enable – «дозвіл виходу». «0» (кнопка відпущена) – виходи DQ відкриті, дані видно на індикаторах; «1» – виходи вимкнено.</span>
+      <b>VPP</b><span>напруга програмування. У EEPROM її подають на той самий вивід, що й OE (OE/VPP): 12 В – запис, 14 В – стирання.</span>
+      <b>WE</b><span>Write Enable – «дозвіл запису». У Flash «0» (перемикач 18 ON) означає, що мікросхема приймає команду або дані.</span>
+      <b>A0…A16</b><span>адреса комірки. <b>DQ0…DQ7</b> – вісім біт даних (байт) комірки.</span>
+      <b>A9</b><span>один з адресних виводів; висока напруга на ньому вмикає службові режими EEPROM (ID, стирання).</span></div>
     <p><b>HEX → двійкова:</b></p>
     <div class="hx"><span>0=0000</span><span>1=0001</span><span>2=0010</span><span>3=0011</span><span>4=0100</span><span>5=0101</span><span>6=0110</span><span>7=0111</span><span>8=1000</span><span>9=1001</span><span>A=1010</span><span>B=1011</span><span>C=1100</span><span>D=1101</span><span>E=1110</span><span>F=1111</span></div>
     <p>Адресні перемикачі 1–17 = A0–A16 (ON = «1»), 18 = WE (Flash). Дані: 1–8 = DQ0 … DQ7. Молодший біт – ліворуч: перемикач 1, DQ0 (так само на індикаторах). CE, OE: клік – натиснути, ще клік – відпустити.</p>
@@ -644,18 +663,18 @@ if (typeof module !== 'undefined') module.exports = M;
     h += '<div class="grp"><span class="lbl"><span class="num">3</span>Дані Q (ON = «1»)</span><div class="dipbox h"><span class="on-l">ON</span>';
     for (i=0;i<8;i++) h += swHtml('d' + i, S.data[i], i + 1, 'DQ' + i, false, '');
     h += '</div></div>';
-    h += '<div class="pwrb"><span class="jack" title="Живлення 5 В"></span><button type="button" id="pwr" class="pbtn blue' + (S.power ? ' on' : '') + '" data-a="power" aria-pressed="' + S.power + '"><span class="cap"><b></b></span><span class="t"><b><span class="num">4</span>5 В</b><small>' + (S.power ? 'увімкнено' : 'вимкнено') + '</small></span></button><i class="pled' + (S.power ? ' on' : '') + '"></i></div>';
+    h += '<div class="pwrb"><span class="jack" title="Живлення 5 В"></span><button type="button" id="pwr" class="pbtn' + (S.power ? ' on' : '') + '" data-a="power" aria-pressed="' + S.power + '"><span class="cap"><b></b></span><span class="t"><b><span class="num">4</span>5 В</b><small>' + (S.power ? 'увімкнено' : 'вимкнено') + '</small></span></button><i class="pled' + (S.power ? ' on' : '') + '"></i></div>';
     h += '</div>';
     /* середина: ліворуч кнопки, по центру модуль, праворуч адресні DIP */
     h += '<div class="rm">';
     h += '<div class="col">';
     h += '<button type="button" id="ce" class="pbtn' + (S.ce ? ' on' : '') + '" data-a="ce" aria-pressed="' + S.ce + '"><span class="cap"><b></b></span><span class="t"><b><span class="num">9</span>CE</b><small>' + (S.ce ? 'натиснута: «0»' : 'відпущена: «1»') + '</small></span></button>';
     var oeTxt = S.oe ? ('натиснута: ' + (ee ? (S.aux ? S.aux + ' В' : '«1» (5 В)') : '«1»')) : 'відпущена: «0»';
-    h += '<button type="button" id="oe" class="pbtn blue' + (S.oe ? ' on' : '') + '" data-a="oe" aria-pressed="' + S.oe + '"><span class="cap"><b></b></span><span class="t"><b><span class="num">8</span>OE' + (ee ? '/VPP' : '') + '</b><small>' + oeTxt + '</small></span></button>';
+    h += '<button type="button" id="oe" class="pbtn' + (S.oe ? ' on' : '') + '" data-a="oe" aria-pressed="' + S.oe + '"><span class="cap"><b></b></span><span class="t"><b><span class="num">8</span>OE' + (ee ? '/VPP' : '') + '</b><small>' + oeTxt + '</small></span></button>';
     h += '<div class="grp"><span class="lbl"><span class="num">7</span>Гніздо 12–14 В</span><div class="seg">' +
       [[0,'викл.'],[12,'12'],[14,'14']].map(function(x){ return '<button type="button" id="aux' + x[0] + '" class="' + (x[0] ? 'hv ' : '') + (S.aux === x[0] ? 'on' : '') + '" data-a="aux" data-v="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div></div>';
     h += '</div>';
-    h += '<div class="col"><div class="chipmod' + (c.damaged ? ' bad' : '') + '"><span class="lbl"><span class="num">2</span>Змінний модуль' + (S.power ? ' (міняти при вимкненому живленні)' : '') + '</span>';
+    h += '<div class="col"><div class="chipmod' + (c.damaged ? ' bad' : '') + '"><span class="lbl"><span class="num">2</span>Змінний модуль</span>';
     h += '<div class="plcc">' + CHIP[S.module].name + '</div>';
     h += '<div class="seg">' + ['eeprom','flash'].map(function(m){ return '<button type="button" id="mod-' + m + '" class="' + (S.module === m ? 'on' : '') + '" data-a="module" data-v="' + m + '"' + (S.power ? ' disabled' : '') + '>' + (m === 'eeprom' ? 'EEPROM' : 'Flash') + '</button>'; }).join('') + '</div>';
     h += jmp('sw14', 14, ' шина 12–14 В → A9', S.sw14, true);
@@ -889,11 +908,19 @@ if (typeof module !== 'undefined') module.exports = M;
   }
 
   /* ---------- кроки і журнал ---------- */
+  var MODENAME = { read:'Зчитування (Read)', scope:'Зчитування від генератора', outdis:'Виходи вимкнено (Output Disable)', standby:'Очікування (Standby)', program:'Запис (Program)', proginh:'Запис заборонено (Program Inhibit)', erase:'Стирання (Erase)', eraseinh:'Стирання заборонено (Erase Inhibit)', id:'Ідентифікація (Silicon ID)', write:'Цикл запису в шину (Flash)', undef:'Недопустима комбінація', off:'Живлення вимкнено' };
+  function modeLine(){
+    var ee = (S.module === 'eeprom'), p = M.pins(S), m = S.power ? M.mode(S, p) : 'off', lv = '';
+    if (S.power){
+      lv = ' · CE = ' + (S.sw10 ? 'ген.' : p.CE) + ', OE' + (ee ? '/VPP' : '') + ' = ' + (S.sw11 ? 'ген.' : (ee ? p.OE + ' В' : p.OE)) + (ee ? (p.A9hv ? ', A9 = ' + p.A9hv + ' В' : '') : ', WE = ' + p.WE);
+    }
+    return '<div class="mode" id="modeLine">Зараз: <b>' + (MODENAME[m] || m) + '</b>' + lv + '</div>';
+  }
   function renderRight2(){
-    var f = UI.flags, V = UI.student, h = '<h2>Хід роботи</h2>' + (V ? '' : '<p class="note">Оберіть себе у списку вгорі.</p>') + '<div class="prog"><ul class="steps" id="steps">';
-    [['eErase','EEPROM: повне стирання'], ['eProg','EEPROM: запис байта' + (V ? ' ' + X(V.ed,2) + ' у комірку ' + X(V.ea,4) : '')], ['eRead','EEPROM: зчитування'], ['eScope','EEPROM: осцилограма, Δt у журналі'],
-      ['fErase','Flash: повне стирання'], ['fProg','Flash: запис байта' + (V ? ' ' + X(V.fd,2) + ' у комірку ' + X(V.fa,5) : '')], ['fRead','Flash: зчитування'], ['fScope','Flash: осцилограма, Δt у журналі']
-    ].forEach(function(x){ h += '<li class="' + (f[x[0]] ? 'done' : '') + '" id="step-' + x[0] + '"><span class="ck">✓</span><span>' + x[1] + '</span></li>'; });
+    var f = UI.flags, V = UI.student, h = '<h2>Хід роботи</h2>' + (V ? '' : '<p class="note">Оберіть себе у списку вгорі.</p>') + modeLine() + '<div class="prog"><ul class="steps" id="steps">';
+    [['eErase','EEPROM: повне стирання','режим Erase: CE = 0, OE/VPP = 14 В, A9 = 14 В, дані = FFh'], ['eProg','EEPROM: запис байта' + (V ? ' ' + X(V.ed,2) + ' у комірку ' + X(V.ea,4) : ''),'режим Program: CE = 0, OE/VPP = 12 В'], ['eRead','EEPROM: зчитування','режим Read: CE = 0, OE = 0, дані вимкнено'], ['eScope','EEPROM: осцилограма, Δt у журналі','Read, але OE від генератора'],
+      ['fErase','Flash: повне стирання','6 циклів запису: CE = 0, WE = 0, OE = 1'], ['fProg','Flash: запис байта' + (V ? ' ' + X(V.fd,2) + ' у комірку ' + X(V.fa,5) : ''),'4 цикли запису: CE = 0, WE = 0, OE = 1'], ['fRead','Flash: зчитування','режим Read: CE = 0, OE = 0, WE = 1'], ['fScope','Flash: осцилограма, Δt у журналі','Read, але OE від генератора']
+    ].forEach(function(x){ h += '<li class="' + (f[x[0]] ? 'done' : '') + '" id="step-' + x[0] + '"><span class="ck">✓</span><span>' + x[1] + '<small>' + x[2] + '</small></span></li>'; });
     h += '</ul><div class="grp"><button type="button" class="btn on" id="btnCheck" data-a="check">Перевірити мою роботу</button><span class="note">Підкаже, що не так.</span></div></div>';
     if (UI.diag){ h += '<ul class="steps diag" id="diag">'; UI.diag.forEach(function(d){ h += '<li class="' + (d.info ? 'inf' : d.ok ? 'done' : 'bad') + '"><span class="ck">' + (d.info ? 'i' : d.ok ? '✓' : '!') + '</span><span>' + esc(d.t) + '</span></li>'; }); h += '</ul>'; }
     $('progress').innerHTML = h;
