@@ -68,3 +68,6 @@ node_modules/
 tests/
 shots/
 *.log
+
+# Lab 2 instructions
+/semimat/README_Lab2.md
